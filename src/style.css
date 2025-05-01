@@ -80,7 +80,6 @@ button:focus-visible {
 
 .mermaid {
   margin: 1rem 0;
-  background-color: white;
   padding: 1rem;
   border-radius: 4px;
   overflow-x: auto;
@@ -89,4 +88,17 @@ button:focus-visible {
 .mermaid svg {
   max-width: 100%;
   height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+/* 确保mermaid图表内的代码块没有背景 */
+.mermaid pre {
+  background-color: transparent !important;
+  padding: 0 !important;
+}
+
+.mermaid code {
+  background-color: transparent !important;
+  padding: 0 !important;
 }

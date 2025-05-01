@@ -182,7 +182,7 @@ watch(markdownContent, async () => {
   // 使用nextTick确保DOM已更新
   await nextTick()
   try {
-    await mermaid.init()
+    await mermaid.run()
     console.log('mermaid charts initialized successfully')
   } catch (error) {
     console.error('Failed to initialize mermaid charts:', error)
@@ -199,142 +199,8 @@ const loadMarkdownContent = async (filePath: string) => {
     const content = await response.text()
     
     // 获取当前文件的目录路径
-    const currentDir = filePath.substring(0, filePath.lastIndexOf('/') + 1)
-    console.log('当前文件目录:', currentDir)
-    
-    // 配置 markdown-it
-    const md = new MarkdownIt({
-      html: true,
-      linkify: true,
-      typographer: true,
-      breaks: true,
-      highlight: function (str: string, lang: string) {
-        console.log('处理代码块:', { lang, content: str.slice(0, 50) + '...' })
-        
-        if (lang === 'mermaid') {
-          const id = `mermaid-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-          console.log('检测到mermaid图表，ID:', id)
-          return `<div class="mermaid" id="${id}">${str}</div>`
-        }
-        
-        if (lang && hljs.getLanguage(lang)) {
-          try {
-            return hljs.highlight(str, { language: lang }).value
-          } catch (err) {
-            console.error('代码高亮失败:', err)
-          }
-        }
-        return '' // 使用默认的转义
-      }
-    })
-
-    // 添加标题锚点
-    md.renderer.rules.heading_open = function (tokens: any[], idx: number, _options: any, _env: any, self: any) {
-      const token = tokens[idx]
-      const level = token.tag.slice(1)
-      const nextToken = tokens[idx + 1]
-      const text = nextToken.content
-      
-      // 生成唯一标识符
-      const id = `heading-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-      
-      token.attrSet('id', id)
-      token.attrSet('data-heading-text', text)
-      token.attrSet('data-heading-level', level)
-      token.attrSet('class', 'markdown-heading')
-      
-      return self.renderToken(tokens, idx, _options)
-    }
-
-    // 添加图片处理规则
-    md.renderer.rules.image = function (tokens: any[], idx: number, _options: any, _env: any, _self: any) {
-      const token = tokens[idx]
-      if (!token.attrs) return ''
-      
-      const src = token.attrs[token.attrIndex('src')][1]
-      const alt = token.attrs[token.attrIndex('alt')][1]
-      
-      console.log('处理图片:', { src, alt, currentDir })
-      
-      // 处理相对路径
-      let finalSrc = src
-      if (!src.startsWith('http') && !src.startsWith('/')) {
-        if (src.startsWith('./')) {
-          // 将 ./assets/ 转换为相对于当前文件的路径
-          finalSrc = currentDir + src.substring(2)
-          console.log('处理 ./ 开头的路径:', { 原始路径: src, 当前目录: currentDir, 最终路径: finalSrc })
-        } else if (src.startsWith('../')) {
-          // 处理上级目录的路径
-          finalSrc = currentDir + src
-          console.log('处理 ../ 开头的路径:', { 原始路径: src, 当前目录: currentDir, 最终路径: finalSrc })
-        } else {
-          // 其他情况，假设是相对于当前目录的路径
-          finalSrc = currentDir + src
-          console.log('处理普通相对路径:', { 原始路径: src, 当前目录: currentDir, 最终路径: finalSrc })
-        }
-      }
-      
-      // 处理 zoom 样式
-      let style = ''
-      const styleIndex = token.attrIndex('style')
-      if (styleIndex >= 0 && token.attrs) {
-        const originalStyle = token.attrs[styleIndex][1]
-        const zoomMatch = originalStyle.match(/zoom:\s*(\d+)%/)
-        if (zoomMatch) {
-          const zoom = parseInt(zoomMatch[1]) / 100
-          style = `transform: scale(${zoom}); transform-origin: center; display: inline-block;`
-        }
-      }
-
-      // 添加错误处理
-      const img = new Image()
-      img.onerror = function() {
-        console.error('图片加载失败:', { 原始路径: src, 最终路径: finalSrc, 错误信息: this })
-      }
-      img.onload = function() {
-        console.log('图片加载成功:', { 原始路径: src, 最终路径: finalSrc })
-      }
-      img.src = finalSrc
-
-      return `<img src="${finalSrc}" alt="${alt}" style="${style}" loading="lazy" decoding="async" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'image-error\'>图片加载失败: ${alt || finalSrc}</div>';" />`
-    }
-
-    // 处理 HTML 标签中的图片
-    md.renderer.rules.html_block = function (tokens: any[], idx: number, _options: any, _env: any, _self: any) {
-      const token = tokens[idx]
-      const content = token.content
-      
-      // 处理 HTML 图片标签
-      if (content.includes('<img')) {
-        return content.replace(/<img([^>]*)>/g, function(_match: string, attributes: string) {
-          // 提取 src 属性
-          const srcMatch = attributes.match(/src=['"]([^'"]+)['"]/)
-          if (srcMatch) {
-            let src = srcMatch[1]
-            console.log('处理HTML中的图片:', { src, currentDir })
-            // 处理相对路径
-            if (!src.startsWith('http') && !src.startsWith('/')) {
-              if (src.startsWith('./')) {
-                // 将 ./assets/ 转换为相对于当前文件的路径
-                src = currentDir + src.substring(2)
-              } else if (src.startsWith('../')) {
-                // 处理上级目录的路径
-                src = currentDir + src
-              } else {
-                // 其他情况，假设是相对于当前目录的路径
-                src = currentDir + src
-              }
-              console.log('处理后的HTML图片路径:', { 原始路径: srcMatch[1], 最终路径: src })
-            }
-            // 替换 src 属性
-            return _match.replace(/src=['"]([^'"]+)['"]/, `src="${src}"`)
-          }
-          return _match
-        })
-      }
-      
-      return token.content
-    }
+    currentDir.value = filePath.substring(0, filePath.lastIndexOf('/') + 1)
+    console.log('当前文件目录:', currentDir.value)
     
     const renderedContent = md.render(content)
     markdownContent.value = renderedContent
