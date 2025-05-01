@@ -348,16 +348,20 @@ const handleScroll = () => {
   }
 }
 
-const scanDocsDirectory = async () => {
+const loadFileList = async () => {
   try {
-    const response = await fetch('/api/docs/list')
+    // 在开发环境中使用 API，在生产环境中使用静态文件
+    const isDev = import.meta.env.DEV
+    const url = isDev ? '/online-typora/api/docs/list' : '/online-typora/docs-list.json'
+    
+    const response = await fetch(url)
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)
     }
-    const data = await response.json()
-    fileTree.value = data
+    const files = await response.json()
+    fileTree.value = files
   } catch (error) {
-    console.error('Error scanning docs directory:', error)
+    console.error('Error loading file list:', error)
   }
 }
 
@@ -401,7 +405,7 @@ const scrollToTop = () => {
 }
 
 onMounted(() => {
-  scanDocsDirectory()
+  loadFileList()
   setTimeout(initObserver, 100)
   
   // 添加滚动监听

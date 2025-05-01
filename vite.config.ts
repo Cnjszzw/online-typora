@@ -44,7 +44,7 @@ export default defineConfig({
 // 配置开发服务器
 export const configureServer = (server: ViteDevServer) => {
   // 添加目录列表中间件
-  server.middlewares.use('/docs', (req: IncomingMessage, res: ServerResponse, next: () => void) => {
+  server.middlewares.use('/online-typora/docs', (req: IncomingMessage, res: ServerResponse, next: () => void) => {
     // 如果是目录请求
     if (req.url === '/' || req.url === '') {
       const docsPath = path.resolve(__dirname, 'public/docs')

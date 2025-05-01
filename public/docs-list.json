@@ -1,0 +1,30 @@
+[
+  {
+    "name": "folder1",
+    "path": "docs/folder1",
+    "children": [
+      {
+        "name": "test - 副本.md",
+        "path": "docs/folder1/test - 副本.md"
+      }
+    ]
+  },
+  {
+    "name": "folder2",
+    "path": "docs/folder2",
+    "children": [
+      {
+        "name": "test - 副本.md",
+        "path": "docs/folder2/test - 副本.md"
+      }
+    ]
+  },
+  {
+    "name": "test.md",
+    "path": "docs/test.md"
+  },
+  {
+    "name": "test2 - 副本.md",
+    "path": "docs/test2 - 副本.md"
+  }
+]
