@@ -3,25 +3,44 @@
     <div class="tabs">
       <div class="tab-container">
         <div class="left-section">
-          <img 
-            :src="activeTab === 'files' ? folderIcon : hierarchyIcon" 
-            alt="icon"
-            class="tab-icon"
-            @click="activeTab = activeTab === 'files' ? 'outline' : 'files'"
-          />
+          <div class="icon-wrapper" 
+            @mouseenter="showTooltip($event, activeTab === 'files' ? '切换到大纲视图' : '切换到文件树视图')" 
+            @mouseleave="hideTooltip"
+            @click="handleIconClick"
+          >
+            <img 
+              :src="activeTab === 'files' ? folderIcon : hierarchyIcon" 
+              alt="icon"
+              class="tab-icon"
+              @click="activeTab = activeTab === 'files' ? 'outline' : 'files'"
+            />
+            <div class="custom-tooltip" v-show="tooltipVisible && currentTooltip === 'left'">
+              {{ tooltipText }}
+            </div>
+          </div>
         </div>
         <div class="center-section">
           <span class="tab-text">{{ activeTab === 'files' ? '文件' : '大纲' }}</span>
         </div>
         <div class="right-section">
-          <img 
-            :src="searchIcon" 
-            alt="search"
-            class="search-icon"
-          />
+          <div class="icon-wrapper" 
+            @mouseenter="showTooltip($event, '查找/搜索')" 
+            @mouseleave="hideTooltip"
+            @click="handleIconClick"
+          >
+            <img 
+              :src="searchIcon" 
+              alt="search"
+              class="tab-icon search-icon"
+            />
+            <div class="custom-tooltip" v-show="tooltipVisible && currentTooltip === 'right'">
+              {{ tooltipText }}
+            </div>
+          </div>
         </div>
       </div>
     </div>
+    <div class="custom-tooltip" ref="tooltip" :style="tooltipStyle">{{ tooltipText }}</div>
     
     <div v-if="activeTab === 'files'" class="file-tree">
       <template v-for="file in fileTree" :key="file.path">
@@ -166,6 +185,16 @@ const showBackToTop = ref(false)
 let observer: IntersectionObserver | null = null
 let lastScrollTop = 0
 let scrollTimeout: number | null = null
+const tooltip = ref<HTMLElement | null>(null)
+const tooltipVisible = ref(false)
+const tooltipText = ref('')
+const currentTooltip = ref<'left' | 'right' | null>(null)
+const tooltipStyle = ref({
+  display: 'none',
+  position: 'fixed',
+  left: '0px',
+  top: '0px'
+})
 
 // 获取存储的文档位置
 const getStoredScrollPosition = (filePath: string): number => {
@@ -403,6 +432,21 @@ const scrollToTop = () => {
   }
 }
 
+const handleIconClick = () => {
+  hideTooltip()
+}
+
+const showTooltip = (event: MouseEvent, text: string) => {
+  tooltipText.value = text
+  tooltipVisible.value = true
+  currentTooltip.value = (event.currentTarget as HTMLElement).closest('.left-section') ? 'left' : 'right'
+}
+
+const hideTooltip = () => {
+  tooltipVisible.value = false
+  currentTooltip.value = null
+}
+
 onMounted(() => {
   loadFileList()
   setTimeout(initObserver, 100)
@@ -488,6 +532,16 @@ onUnmounted(() => {
   position: relative;
 }
 
+.tab-icon, .search-icon {
+  &[title] {
+    pointer-events: auto;
+  }
+  
+  &:hover {
+    cursor: pointer;
+  }
+}
+
 .tab-icon {
   width: 18px;
   height: 18px;
@@ -495,6 +549,19 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.search-icon {
+  width: 26px;
+  height: 26px;
+  position: absolute;
+  right: -10px;
+  top: 11px;
+  cursor: pointer;
+}
+
+[title] {
+  transition-delay: 0s;
 }
 
 .tab-text {
@@ -506,18 +573,6 @@ onUnmounted(() => {
   height: 18px;
   display: flex;
   align-items: center;
-}
-
-.search-icon {
-  width: 26px;
-  height: 26px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: absolute;
-  right: -10px;
-  top: 11px;
 }
 
 .file-tree {
@@ -696,5 +751,44 @@ onUnmounted(() => {
 
 .back-to-top:hover {
   background-color: #f5f5f5;
+}
+
+.icon-wrapper {
+  position: relative;
+}
+
+.left-section .icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.right-section .icon-wrapper {
+  position: static;
+  width: 100%;
+  height: 100%;
+}
+
+.custom-tooltip {
+  position: absolute;
+  z-index: 9999;
+  background-color: #616161;
+  color: white;
+  padding: 5px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  pointer-events: none;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  left: 100%;
+  top: 100%;
+  margin-left: 5px;
+  margin-top: -10px;
+}
+
+.right-section .custom-tooltip {
+  right: -10px;
+  left: auto;
 }
 </style> 
