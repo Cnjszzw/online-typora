@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 import Sidebar from './components/Sidebar.vue'
 import MarkdownIt from 'markdown-it'
 import hljs from 'highlight.js'
@@ -8,6 +8,9 @@ import MarkdownItContainer from 'markdown-it-container'
 
 // 存储标题元素的引用
 const headingRefs = ref<Map<string, HTMLElement>>(new Map())
+
+// 定义 currentDir 变量
+const currentDir = ref('')
 
 // 配置 markdown-it
 const md = new MarkdownIt({
@@ -27,11 +30,10 @@ const md = new MarkdownIt({
 
 // 使用 container 插件
 md.use(MarkdownItContainer, 'figure', {
-  validate: function(params) {
+  validate: function(params: string) {
     return params.trim().match(/^figure\s+(.*)$/)
   },
-  render: function (tokens, idx) {
-    const m = tokens[idx].info.trim().match(/^figure\s+(.*)$/)
+  render: function (tokens: any[], idx: number) {
     if (tokens[idx].nesting === 1) {
       return `<figure class="md-figure">\n`
     } else {
@@ -41,7 +43,7 @@ md.use(MarkdownItContainer, 'figure', {
 })
 
 // 添加标题锚点
-md.renderer.rules.heading_open = function (tokens, idx, options, env, self) {
+md.renderer.rules.heading_open = function (tokens: any[], idx: number, _options: any, _env: any, self: any) {
   const token = tokens[idx]
   const level = token.tag.slice(1)
   const nextToken = tokens[idx + 1]
@@ -55,39 +57,41 @@ md.renderer.rules.heading_open = function (tokens, idx, options, env, self) {
   token.attrSet('data-heading-level', level)
   token.attrSet('class', 'markdown-heading')
   
-  return self.renderToken(tokens, idx, options)
+  return self.renderToken(tokens, idx, _options)
 }
 
 // 添加图片处理
-md.renderer.rules.image = function (tokens, idx, options, env, self) {
+md.renderer.rules.image = function (tokens: any[], idx: number, _options: any, _env: any, _self: any) {
   const token = tokens[idx]
+  if (!token.attrs) return ''
+  
   const src = token.attrs[token.attrIndex('src')][1]
   const alt = token.attrs[token.attrIndex('alt')][1]
   
-  console.log('处理图片:', { src, alt, currentDir })
+  console.log('处理图片:', { src, alt, currentDir: currentDir.value })
   
   // 处理相对路径
   let finalSrc = src
   if (!src.startsWith('http') && !src.startsWith('/')) {
     if (src.startsWith('./')) {
       // 将 ./assets/ 转换为相对于当前文件的路径
-      finalSrc = currentDir + src.substring(2)
-      console.log('处理 ./ 开头的路径:', { 原始路径: src, 当前目录: currentDir, 最终路径: finalSrc })
+      finalSrc = currentDir.value + src.substring(2)
+      console.log('处理 ./ 开头的路径:', { 原始路径: src, 当前目录: currentDir.value, 最终路径: finalSrc })
     } else if (src.startsWith('../')) {
       // 处理上级目录的路径
-      finalSrc = currentDir + src
-      console.log('处理 ../ 开头的路径:', { 原始路径: src, 当前目录: currentDir, 最终路径: finalSrc })
+      finalSrc = currentDir.value + src
+      console.log('处理 ../ 开头的路径:', { 原始路径: src, 当前目录: currentDir.value, 最终路径: finalSrc })
     } else {
       // 其他情况，假设是相对于当前目录的路径
-      finalSrc = currentDir + src
-      console.log('处理普通相对路径:', { 原始路径: src, 当前目录: currentDir, 最终路径: finalSrc })
+      finalSrc = currentDir.value + src
+      console.log('处理普通相对路径:', { 原始路径: src, 当前目录: currentDir.value, 最终路径: finalSrc })
     }
   }
   
   // 处理 zoom 样式
   let style = ''
   const styleIndex = token.attrIndex('style')
-  if (styleIndex >= 0) {
+  if (styleIndex >= 0 && token.attrs) {
     const originalStyle = token.attrs[styleIndex][1]
     const zoomMatch = originalStyle.match(/zoom:\s*(\d+)%/)
     if (zoomMatch) {
@@ -110,36 +114,36 @@ md.renderer.rules.image = function (tokens, idx, options, env, self) {
 }
 
 // 处理 HTML 标签中的图片
-md.renderer.rules.html_block = function (tokens, idx, options, env, self) {
+md.renderer.rules.html_block = function (tokens: any[], idx: number, _options: any, _env: any, _self: any) {
   const token = tokens[idx]
   const content = token.content
   
   // 处理 HTML 图片标签
   if (content.includes('<img')) {
-    return content.replace(/<img([^>]*)>/g, function(match, attributes) {
+    return content.replace(/<img([^>]*)>/g, function(_match: string, attributes: string) {
       // 提取 src 属性
       const srcMatch = attributes.match(/src=['"]([^'"]+)['"]/)
       if (srcMatch) {
         let src = srcMatch[1]
-        console.log('处理HTML中的图片:', { src, currentDir })
+        console.log('处理HTML中的图片:', { src, currentDir: currentDir.value })
         // 处理相对路径
         if (!src.startsWith('http') && !src.startsWith('/')) {
           if (src.startsWith('./')) {
             // 将 ./assets/ 转换为相对于当前文件的路径
-            src = currentDir + src.substring(2)
+            src = currentDir.value + src.substring(2)
           } else if (src.startsWith('../')) {
             // 处理上级目录的路径
-            src = currentDir + src
+            src = currentDir.value + src
           } else {
             // 其他情况，假设是相对于当前目录的路径
-            src = currentDir + src
+            src = currentDir.value + src
           }
           console.log('处理后的HTML图片路径:', { 原始路径: srcMatch[1], 最终路径: src })
         }
         // 替换 src 属性
-        return match.replace(/src=['"]([^'"]+)['"]/, `src="${src}"`)
+        return _match.replace(/src=['"]([^'"]+)['"]/, `src="${src}"`)
       }
-      return match
+      return _match
     })
   }
   
@@ -181,7 +185,7 @@ const loadMarkdownContent = async (filePath: string) => {
     })
 
     // 添加标题锚点
-    md.renderer.rules.heading_open = function (tokens, idx, options, env, self) {
+    md.renderer.rules.heading_open = function (tokens: any[], idx: number, _options: any, _env: any, self: any) {
       const token = tokens[idx]
       const level = token.tag.slice(1)
       const nextToken = tokens[idx + 1]
@@ -195,12 +199,14 @@ const loadMarkdownContent = async (filePath: string) => {
       token.attrSet('data-heading-level', level)
       token.attrSet('class', 'markdown-heading')
       
-      return self.renderToken(tokens, idx, options)
+      return self.renderToken(tokens, idx, _options)
     }
 
     // 添加图片处理规则
-    md.renderer.rules.image = function (tokens, idx, options, env, self) {
+    md.renderer.rules.image = function (tokens: any[], idx: number, _options: any, _env: any, _self: any) {
       const token = tokens[idx]
+      if (!token.attrs) return ''
+      
       const src = token.attrs[token.attrIndex('src')][1]
       const alt = token.attrs[token.attrIndex('alt')][1]
       
@@ -227,7 +233,7 @@ const loadMarkdownContent = async (filePath: string) => {
       // 处理 zoom 样式
       let style = ''
       const styleIndex = token.attrIndex('style')
-      if (styleIndex >= 0) {
+      if (styleIndex >= 0 && token.attrs) {
         const originalStyle = token.attrs[styleIndex][1]
         const zoomMatch = originalStyle.match(/zoom:\s*(\d+)%/)
         if (zoomMatch) {
@@ -250,13 +256,13 @@ const loadMarkdownContent = async (filePath: string) => {
     }
 
     // 处理 HTML 标签中的图片
-    md.renderer.rules.html_block = function (tokens, idx, options, env, self) {
+    md.renderer.rules.html_block = function (tokens: any[], idx: number, _options: any, _env: any, _self: any) {
       const token = tokens[idx]
       const content = token.content
       
       // 处理 HTML 图片标签
       if (content.includes('<img')) {
-        return content.replace(/<img([^>]*)>/g, function(match, attributes) {
+        return content.replace(/<img([^>]*)>/g, function(_match: string, attributes: string) {
           // 提取 src 属性
           const srcMatch = attributes.match(/src=['"]([^'"]+)['"]/)
           if (srcMatch) {
@@ -277,9 +283,9 @@ const loadMarkdownContent = async (filePath: string) => {
               console.log('处理后的HTML图片路径:', { 原始路径: srcMatch[1], 最终路径: src })
             }
             // 替换 src 属性
-            return match.replace(/src=['"]([^'"]+)['"]/, `src="${src}"`)
+            return _match.replace(/src=['"]([^'"]+)['"]/, `src="${src}"`)
           }
-          return match
+          return _match
         })
       }
       
@@ -309,9 +315,7 @@ const loadMarkdownContent = async (filePath: string) => {
       
       // 构建层级结构的大纲
       const outline: any[] = []
-      let currentLevel = 0
-      let currentParent: any = null
-      let parentStack: any[] = []
+      const parentStack: any[] = []
       
       headings.forEach(heading => {
         const id = heading.id
@@ -339,9 +343,6 @@ const loadMarkdownContent = async (filePath: string) => {
           outline.push(item)
         }
         
-        // 更新当前层级
-        currentLevel = level
-        currentParent = item
         if (level < 6) { // 只处理到 h5
           parentStack.push(item)
         }

@@ -181,7 +181,7 @@ const getStoredScrollPosition = (filePath: string): number => {
 // 保存文档位置
 const saveScrollPosition = (filePath: string, position: number) => {
   const storedPositions = localStorage.getItem('documentScrollPositions')
-  let positions = {}
+  let positions: Record<string, number> = {}
   if (storedPositions) {
     positions = JSON.parse(storedPositions)
   }
