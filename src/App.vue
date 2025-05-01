@@ -13,7 +13,13 @@ onMounted(() => {
     startOnLoad: true,
     theme: 'default',
     securityLevel: 'loose',
-    logLevel: 'info',
+    flowchart: {
+      htmlLabels: true,
+      useMaxWidth: true,
+      curve: 'basis',
+      defaultRenderer: 'dagre-wrapper'
+    },
+    logLevel: 5, // 设置为"error"级别
   })
 })
 
@@ -30,12 +36,9 @@ const md = new MarkdownIt({
   typographer: true, // 启用一些语言中性的替换 + 引号美化
   breaks: true,      // 启用换行符
   highlight: function (str: string, lang: string) {
-    console.log('处理代码块:', { lang, content: str.slice(0, 50) + '...' })
-    
     if (lang === 'mermaid') {
       const id = `mermaid-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-      console.log('检测到mermaid图表，ID:', id)
-      return `<div class="mermaid" id="${id}">${str}</div>`
+      return `<pre class="mermaid" id="${id}">${str}</pre>`
     }
     
     if (lang && hljs.getLanguage(lang)) {
@@ -178,12 +181,10 @@ const isUserClick = ref(false) // 添加用户点击标记
 
 // 监听markdownContent变化，初始化mermaid图表
 watch(markdownContent, async () => {
-  console.log('markdownContent changed, initializing mermaid charts...')
   // 使用nextTick确保DOM已更新
   await nextTick()
   try {
     await mermaid.run()
-    console.log('mermaid charts initialized successfully')
   } catch (error) {
     console.error('Failed to initialize mermaid charts:', error)
   }
