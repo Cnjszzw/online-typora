@@ -1,10 +1,21 @@
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { ref, onMounted, watch, nextTick } from 'vue'
 import Sidebar from './components/Sidebar.vue'
 import MarkdownIt from 'markdown-it'
 import hljs from 'highlight.js'
 import 'highlight.js/styles/github.css'
 import MarkdownItContainer from 'markdown-it-container'
+import mermaid from 'mermaid'
+
+// 初始化mermaid
+onMounted(() => {
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'default',
+    securityLevel: 'loose',
+    logLevel: 'info',
+  })
+})
 
 // 存储标题元素的引用
 const headingRefs = ref<Map<string, HTMLElement>>(new Map())
@@ -18,11 +29,21 @@ const md = new MarkdownIt({
   linkify: true,     // 自动转换 URL 为链接
   typographer: true, // 启用一些语言中性的替换 + 引号美化
   breaks: true,      // 启用换行符
-  highlight: function (str, lang) {
+  highlight: function (str: string, lang: string) {
+    console.log('处理代码块:', { lang, content: str.slice(0, 50) + '...' })
+    
+    if (lang === 'mermaid') {
+      const id = `mermaid-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      console.log('检测到mermaid图表，ID:', id)
+      return `<div class="mermaid" id="${id}">${str}</div>`
+    }
+    
     if (lang && hljs.getLanguage(lang)) {
       try {
         return hljs.highlight(str, { language: lang }).value
-      } catch (__) {}
+      } catch (err) {
+        console.error('代码高亮失败:', err)
+      }
     }
     return '' // 使用默认的转义
   }
@@ -155,6 +176,19 @@ const currentOutline = ref<{ id: string; text: string; level: number; children?:
 const selectedHeading = ref('')
 const isUserClick = ref(false) // 添加用户点击标记
 
+// 监听markdownContent变化，初始化mermaid图表
+watch(markdownContent, async () => {
+  console.log('markdownContent changed, initializing mermaid charts...')
+  // 使用nextTick确保DOM已更新
+  await nextTick()
+  try {
+    await mermaid.init()
+    console.log('mermaid charts initialized successfully')
+  } catch (error) {
+    console.error('Failed to initialize mermaid charts:', error)
+  }
+})
+
 const loadMarkdownContent = async (filePath: string) => {
   try {
     console.log('开始加载文件:', filePath)
@@ -174,11 +208,21 @@ const loadMarkdownContent = async (filePath: string) => {
       linkify: true,
       typographer: true,
       breaks: true,
-      highlight: function (str, lang) {
+      highlight: function (str: string, lang: string) {
+        console.log('处理代码块:', { lang, content: str.slice(0, 50) + '...' })
+        
+        if (lang === 'mermaid') {
+          const id = `mermaid-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+          console.log('检测到mermaid图表，ID:', id)
+          return `<div class="mermaid" id="${id}">${str}</div>`
+        }
+        
         if (lang && hljs.getLanguage(lang)) {
           try {
             return hljs.highlight(str, { language: lang }).value
-          } catch (__) {}
+          } catch (err) {
+            console.error('代码高亮失败:', err)
+          }
         }
         return '' // 使用默认的转义
       }

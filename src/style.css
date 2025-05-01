@@ -77,3 +77,16 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+.mermaid {
+  margin: 1rem 0;
+  background-color: white;
+  padding: 1rem;
+  border-radius: 4px;
+  overflow-x: auto;
+}
+
+.mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
