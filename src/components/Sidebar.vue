@@ -1,17 +1,25 @@
 <template>
   <div class="sidebar">
     <div class="tabs">
-      <div 
-        :class="['tab', { active: activeTab === 'files' }]"
-        @click="activeTab = 'files'"
-      >
-        文件
-      </div>
-      <div 
-        :class="['tab', { active: activeTab === 'outline' }]"
-        @click="activeTab = 'outline'"
-      >
-        大纲
+      <div class="tab-container">
+        <div class="left-section">
+          <img 
+            :src="activeTab === 'files' ? folderIcon : hierarchyIcon" 
+            alt="icon"
+            class="tab-icon"
+            @click="activeTab = activeTab === 'files' ? 'outline' : 'files'"
+          />
+        </div>
+        <div class="center-section">
+          <span class="tab-text">{{ activeTab === 'files' ? '文件' : '大纲' }}</span>
+        </div>
+        <div class="right-section">
+          <img 
+            :src="searchIcon" 
+            alt="search"
+            class="search-icon"
+          />
+        </div>
       </div>
     </div>
     
@@ -50,19 +58,7 @@
                     <div :class="['file-item', { 'is-selected': selectedFile === greatGrandChild.path }]">
                       <div class="file-name" @click="handleFileSelect(greatGrandChild)">
                         {{ greatGrandChild.name }}
-                        <span v-if="greatGrandChild.children" class="arrow-icon" :class="{ expanded: greatGrandChild.isExpanded }" @click.stop="toggleFolder(greatGrandChild)">
-                          <img src="/arrow-next-small-svgrepo-com.svg" alt="arrow" style="width: 12px; height: 12px;" />
-                        </span>
                       </div>
-                    </div>
-                    <div v-if="greatGrandChild.children && greatGrandChild.isExpanded" class="children">
-                      <template v-for="greatGreatGrandChild in greatGrandChild.children" :key="greatGreatGrandChild.path">
-                        <div :class="['file-item', { 'is-selected': selectedFile === greatGreatGrandChild.path }]">
-                          <div class="file-name" @click="handleFileSelect(greatGreatGrandChild)">
-                            {{ greatGreatGrandChild.name }}
-                          </div>
-                        </div>
-                      </template>
                     </div>
                   </template>
                 </div>
@@ -133,6 +129,9 @@
 
 <script lang="ts" setup>
 import { ref, onMounted, watch, onUnmounted } from 'vue'
+import searchIcon from '/search.svg'
+import folderIcon from '/folder.svg'
+import hierarchyIcon from '/hierarchy.svg'
 
 interface FileNode {
   name: string
@@ -452,21 +451,73 @@ onUnmounted(() => {
   height: 48px;
 }
 
-.tab {
+.tab-container {
   flex: 1;
-  padding: 0 12px;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  height: 100%;
+  position: relative;
+}
+
+.left-section {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  width: 26px;
+  position: relative;
+}
+
+.center-section {
+  position: absolute;
+  left: calc(50% + 6px);
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  white-space: nowrap;
+}
+
+.right-section {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  width: 26px;
+  position: relative;
+}
+
+.tab-icon {
+  width: 18px;
+  height: 18px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
-  height: 48px;
 }
 
-.tab.active {
-  background-color: #f5f5f5;
-  border-bottom: 2px solid #1890ff;
+.tab-text {
+  font-size: 14px;
+  font-weight: bold;
+  user-select: none;
+  color: #000000;
+  line-height: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  width: 26px;
+  height: 26px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  right: -10px;
+  top: 11px;
 }
 
 .file-tree {
