@@ -43,7 +43,23 @@ const md = new MarkdownIt({
     
     if (lang && hljs.getLanguage(lang)) {
       try {
-        return hljs.highlight(str, { language: lang }).value
+        const highlighted = hljs.highlight(str, { language: lang }).value
+        const lines = str.split('\n')
+        const lineNumbers = lines.map((_, i) => i + 1).join('\n')
+        
+        return `<pre class="code-block" data-lang="${lang}">
+          <code data-line-numbers="${lineNumbers}">${highlighted}</code>
+          <button class="copy-button" title="复制代码">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path d="M14 12V2H4V0h12v12h-2zM0 4h12v12H0V4zm2 2v8h8V6H2z" fill-rule="evenodd"/>
+            </svg>
+          </button>
+          <button class="wrap-button" title="切换换行">
+            <svg width="14" height="14" viewBox="0 0 1200 1200" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path d="M808.969,133.929v257.06H942.94v267.899H417.981V508.763L0,787.417l417.982,278.654V915.946h524.959H1200V658.888V390.988v-257.06H942.941H808.969L808.969,133.929z"/>
+            </svg>
+          </button>
+        </pre>`
       } catch (err) {
         console.error('代码高亮失败:', err)
       }
@@ -179,16 +195,65 @@ const currentOutline = ref<{ id: string; text: string; level: number; children?:
 const selectedHeading = ref('')
 const isUserClick = ref(false) // 添加用户点击标记
 
-// 监听markdownContent变化，初始化mermaid图表
+// 监听markdownContent变化，初始化mermaid图表和代码块功能
 watch(markdownContent, async () => {
   // 使用nextTick确保DOM已更新
   await nextTick()
   try {
     await mermaid.run()
+    initCodeBlocks()
   } catch (error) {
     console.error('Failed to initialize mermaid charts:', error)
   }
 })
+
+// 初始化代码块功能
+const initCodeBlocks = () => {
+  const codeBlocks = document.querySelectorAll('.code-block')
+  codeBlocks.forEach(block => {
+    // 添加复制功能
+    const copyButton = block.querySelector('.copy-button')
+    if (copyButton) {
+      copyButton.addEventListener('click', async () => {
+        const code = block.querySelector('code')?.textContent || ''
+        try {
+          await navigator.clipboard.writeText(code)
+          copyButton.innerHTML = `
+            <svg width="14" height="14" viewBox="0 -1.5 11 11" xmlns="http://www.w3.org/2000/svg">
+              <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+                <g transform="translate(-304.000000, -366.000000)" fill="currentColor">
+                  <g transform="translate(56.000000, 160.000000)">
+                    <polygon points="259 207.6 252.2317 214 252.2306 213.999 252.2306 214 248 210 249.6918 208.4 252.2306 210.8 257.3082 206"></polygon>
+                  </g>
+                </g>
+              </g>
+            </svg>
+          `
+          setTimeout(() => {
+            copyButton.innerHTML = `
+              <svg width="14" height="14" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+                <path d="M14 12V2H4V0h12v12h-2zM0 4h12v12H0V4zm2 2v8h8V6H2z" fill-rule="evenodd"/>
+              </svg>
+            `
+          }, 1000)
+        } catch (err) {
+          console.error('复制失败:', err)
+        }
+      })
+    }
+
+    // 添加换行功能
+    const wrapButton = block.querySelector('.wrap-button')
+    if (wrapButton) {
+      wrapButton.addEventListener('click', () => {
+        const code = block.querySelector('code')
+        if (code) {
+          code.style.whiteSpace = code.style.whiteSpace === 'pre-wrap' ? 'pre' : 'pre-wrap'
+        }
+      })
+    }
+  })
+}
 
 const loadMarkdownContent = async (filePath: string) => {
   try {
@@ -582,12 +647,14 @@ html, body {
 }
 
 .markdown-content pre {
-  padding: 16px;
-  overflow: auto;
+  position: relative;
+  padding: 8px 16px;
   font-size: 85%;
   line-height: 1.45;
   background-color: #f6f8fa;
   border-radius: 3px;
+  margin: 4px 0;
+  overflow: hidden;
 }
 
 .markdown-content pre code {
@@ -598,6 +665,134 @@ html, body {
   white-space: pre;
   background: transparent;
   border: 0;
+  display: block;
+  position: relative;
+  overflow: hidden;
+  line-height: 1.45;
+  font-family: "SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+}
+
+/* 代码语言标签 */
+.markdown-content pre::before {
+  content: attr(data-lang);
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 2px 8px;
+  font-size: 12px;
+  color: #666;
+  background-color: #e1e4e8;
+  border-bottom-left-radius: 3px;
+  opacity: 1;
+  transition: opacity 0.3s;
+}
+
+.markdown-content pre:hover::before {
+  opacity: 0;
+}
+
+/* 行号 */
+.markdown-content pre code::before {
+  content: attr(data-line-numbers);
+  position: absolute;
+  left: 0;
+  top: 0;
+  padding: 0 8px;
+  color: #999;
+  font-size: 100%;
+  line-height: 1.45;
+  text-align: right;
+  user-select: none;
+  pointer-events: none;
+  font-family: "SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  width: 40px;
+  box-sizing: border-box;
+  background: transparent;
+}
+
+/* 复制按钮 */
+.markdown-content pre .copy-button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  outline: none;
+}
+
+.markdown-content pre .copy-button:focus {
+  outline: none;
+}
+
+/* 换行按钮 */
+.markdown-content pre .wrap-button {
+  position: absolute;
+  top: 8px;
+  right: 40px;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  outline: none;
+}
+
+.markdown-content pre .wrap-button:focus {
+  outline: none;
+}
+
+.markdown-content pre:hover .copy-button,
+.markdown-content pre:hover .wrap-button {
+  opacity: 1;
+}
+
+.markdown-content pre .copy-button svg,
+.markdown-content pre .wrap-button svg {
+  fill: #666;
+}
+
+/* 复制成功动画 */
+@keyframes copySuccess {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.markdown-content pre .copy-success {
+  animation: copySuccess 0.3s ease-in-out;
+}
+
+.markdown-content pre .copy-button svg,
+.markdown-content pre .wrap-button svg {
+  fill: #666;
+}
+
+.markdown-content pre .copy-button:hover svg,
+.markdown-content pre .wrap-button:hover svg {
+  fill: #666;
+}
+
+/* 代码内容区域 */
+.markdown-content pre code {
+  padding-left: 48px;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .markdown-content img {

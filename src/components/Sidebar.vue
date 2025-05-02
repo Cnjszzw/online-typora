@@ -191,9 +191,9 @@ const tooltipText = ref('')
 const currentTooltip = ref<'left' | 'right' | null>(null)
 const tooltipStyle = ref({
   display: 'none',
-  position: 'fixed',
-  left: '0px',
-  top: '0px'
+  position: 'absolute' as const,
+  left: '0',
+  top: '0'
 })
 
 // 获取存储的文档位置
