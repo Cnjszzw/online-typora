@@ -672,10 +672,11 @@ html, body {
   padding: 2px 8px;
   font-size: 12px;
   color: #666;
-  background-color: #e1e4e8;
+  background-color: #fff;
   border-bottom-left-radius: 3px;
   opacity: 1;
   transition: opacity 0.3s;
+  z-index: 2;
 }
 
 .markdown-content pre:hover::before {
@@ -703,6 +704,8 @@ html, body {
   border-right: 1px solid #eee;
   border-top-left-radius: 3px;
   border-bottom-left-radius: 3px;
+  border-top-right-radius: 3px;
+  border-bottom-right-radius: 3px;
 }
 
 /* 复制按钮 */
@@ -713,7 +716,7 @@ html, body {
   width: 24px;
   height: 24px;
   padding: 0;
-  background-color: transparent;
+  background-color: #fff;
   border: none;
   cursor: pointer;
   opacity: 0;
@@ -722,6 +725,7 @@ html, body {
   align-items: center;
   justify-content: center;
   outline: none;
+  z-index: 2;
 }
 
 .markdown-content pre .copy-button:focus {
@@ -736,7 +740,7 @@ html, body {
   width: 24px;
   height: 24px;
   padding: 0;
-  background-color: transparent;
+  background-color: #fff;
   border: none;
   cursor: pointer;
   opacity: 0;
@@ -745,6 +749,7 @@ html, body {
   align-items: center;
   justify-content: center;
   outline: none;
+  z-index: 2;
 }
 
 .markdown-content pre .wrap-button:focus {

@@ -75,3 +75,29 @@ test
 s
 ```
 
+`com/gbcom/wvp/webrtc/server/WebsocketSessionManager.java`
+
+```java
+// 此为单点消息
+public static boolean send(Session session, String message) {
+    boolean blag = false;
+    if (session == null) {
+        logger.error("【websocket】 发送消息失败 session == null：" + message + " id:" + getIdBySession(session));
+        return blag;
+    }
+    synchronized (session) {
+        if (session.isOpen()) {
+            try {
+                blag = true;
+                session.getBasicRemote().sendText(message);
+                logger.info("【websocket】【send->" + getIdBySession(session) + "】" + message);
+            } catch (Exception e) {
+                blag = false;
+                e.printStackTrace();
+                logger.error("【websocket】【send Fail->id==>" + getIdBySession(session) + ",type ==>" +sessionMemberType.get(getIdBySession(session))+"】" + message, e);
+            }
+        }
+    }
+    return blag;
+}
+```
