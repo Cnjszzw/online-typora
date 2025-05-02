@@ -648,7 +648,7 @@ html, body {
 
 .markdown-content pre {
   position: relative;
-  padding: 8px 16px;
+  padding: 8px 4px;
   font-size: 85%;
   line-height: 1.45;
   background-color: #f6f8fa;
@@ -670,6 +670,7 @@ html, body {
   overflow: hidden;
   line-height: 1.45;
   font-family: "SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  padding-left: 32px;
 }
 
 /* 代码语言标签 */
@@ -697,7 +698,8 @@ html, body {
   position: absolute;
   left: 0;
   top: 0;
-  padding: 0 8px;
+  bottom: 0;
+  padding: 0 6px 0 2px;
   color: #999;
   font-size: 100%;
   line-height: 1.45;
@@ -705,9 +707,14 @@ html, body {
   user-select: none;
   pointer-events: none;
   font-family: "SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
-  width: 40px;
+  width: 30px;
   box-sizing: border-box;
-  background: transparent;
+  background-color: #f0f0f0;
+  border-right: 1px solid #eee;
+  border-top-left-radius: 3px;
+  border-bottom-left-radius: 3px;
+  border-top-right-radius: 3px;
+  border-bottom-right-radius: 3px;
 }
 
 /* 复制按钮 */
@@ -785,14 +792,6 @@ html, body {
 .markdown-content pre .copy-button:hover svg,
 .markdown-content pre .wrap-button:hover svg {
   fill: #666;
-}
-
-/* 代码内容区域 */
-.markdown-content pre code {
-  padding-left: 48px;
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .markdown-content img {
