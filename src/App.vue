@@ -45,21 +45,9 @@ const md = new MarkdownIt({
       try {
         const highlighted = hljs.highlight(str, { language: lang }).value
         const lines = str.split('\n')
-        const lineNumbers = lines.map((_, i) => i + 1).join('\n')
+        const lineNumbers = lines.length === 1 && lines[0].trim() === '' ? '1' : lines.map((_, i) => i + 1).join('\n')
         
-        return `<pre class="code-block" data-lang="${lang}">
-          <code data-line-numbers="${lineNumbers}">${highlighted}</code>
-          <button class="copy-button" title="复制代码">
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-              <path d="M14 12V2H4V0h12v12h-2zM0 4h12v12H0V4zm2 2v8h8V6H2z" fill-rule="evenodd"/>
-            </svg>
-          </button>
-          <button class="wrap-button" title="切换换行">
-            <svg width="14" height="14" viewBox="0 0 1200 1200" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-              <path d="M808.969,133.929v257.06H942.94v267.899H417.981V508.763L0,787.417l417.982,278.654V915.946h524.959H1200V658.888V390.988v-257.06H942.941H808.969L808.969,133.929z"/>
-            </svg>
-          </button>
-        </pre>`
+        return `<pre class="code-block" data-lang="${lang}"><code data-line-numbers="${lineNumbers}">${highlighted || ' '}</code><button class="copy-button" title="复制代码"><svg width="14" height="14" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M14 12V2H4V0h12v12h-2zM0 4h12v12H0V4zm2 2v8h8V6H2z" fill-rule="evenodd"/></svg></button><button class="wrap-button" title="切换换行"><svg width="14" height="14" viewBox="0 0 1200 1200" xmlns="http://www.w3.org/2000/svg"><path d="M808.969,133.929v257.06H942.94v267.899H417.981V508.763L0,787.417l417.982,278.654V915.946h524.959H1200V658.888V390.988v-257.06H942.941H808.969L808.969,133.929z"/></svg></button></pre>`
       } catch (err) {
         console.error('代码高亮失败:', err)
       }
@@ -655,6 +643,8 @@ html, body {
   border-radius: 3px;
   margin: 4px 0;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .markdown-content pre code {
@@ -698,7 +688,7 @@ html, body {
   position: absolute;
   left: 0;
   top: 0;
-  bottom: 0;
+  height: 100%;
   padding: 0 6px 0 2px;
   color: #999;
   font-size: 100%;
@@ -713,8 +703,6 @@ html, body {
   border-right: 1px solid #eee;
   border-top-left-radius: 3px;
   border-bottom-left-radius: 3px;
-  border-top-right-radius: 3px;
-  border-bottom-right-radius: 3px;
 }
 
 /* 复制按钮 */
