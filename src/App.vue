@@ -44,24 +44,36 @@ const processPath = (path: string, currentDir: string) => {
 
   const basePath = getBasePath()
   
+  // 标准化路径分隔符
+  const normalizedPath = path.replace(/\\/g, '/')
+  const normalizedCurrentDir = currentDir ? currentDir.replace(/\\/g, '/') : ''
+  
+  // 确保路径之间有且仅有一个斜杠
+  const joinPaths = (...parts: string[]) => {
+    return parts
+      .map(part => part.replace(/^\/+|\/+$/g, '')) // 移除开头和结尾的斜杠
+      .filter(Boolean) // 移除空字符串
+      .join('/')
+  }
+
   // 如果没有当前目录，使用默认路径
-  if (!currentDir) {
-    return `${basePath}/docs/${path.replace(/^\.\//, '')}`
+  if (!normalizedCurrentDir) {
+    return '/' + joinPaths(basePath.replace(/^\/+|\/+$/g, ''), 'docs', normalizedPath.replace(/^\.\//, ''))
   }
 
   // 处理 ../ 开头的路径
-  if (path.startsWith('../')) {
-    const parentDir = currentDir.split('/').slice(0, -2).join('/') + '/'
-    return `${basePath}${parentDir}${path.substring(3)}`
+  if (normalizedPath.startsWith('../')) {
+    const parentDir = normalizedCurrentDir.split('/').slice(0, -2).join('/')
+    return '/' + joinPaths(basePath.replace(/^\/+|\/+$/g, ''), parentDir, normalizedPath.substring(3))
   }
 
   // 处理 ./ 开头的路径
-  if (path.startsWith('./')) {
-    return `${basePath}${currentDir}${path.substring(2)}`
+  if (normalizedPath.startsWith('./')) {
+    return '/' + joinPaths(basePath.replace(/^\/+|\/+$/g, ''), normalizedCurrentDir, normalizedPath.substring(2))
   }
 
   // 处理其他相对路径
-  return `${basePath}${currentDir}${path}`
+  return '/' + joinPaths(basePath.replace(/^\/+|\/+$/g, ''), normalizedCurrentDir, normalizedPath)
 }
 
 // 配置 markdown-it
