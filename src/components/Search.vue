@@ -166,21 +166,36 @@ const indexFile = async (file: any) => {
       return
     }
     
+    // 处理原始路径
+    let originalPath = file.originalPath || file.path
+    if (originalPath.includes('/api/docs/content?path=')) {
+      // 从API URL中提取路径
+      originalPath = decodeURIComponent(originalPath.split('path=')[1])
+    }
+    // 确保使用正斜杠
+    originalPath = originalPath.replace(/\\/g, '/')
+    // 移除开头的 'docs/' 如果存在
+    originalPath = originalPath.replace(/^docs\//, '')
+    // 添加 '/docs/' 前缀
+    originalPath = '/docs/' + originalPath
+    
+    console.log('处理后的文件路径:', originalPath)
+    
     const docData: DocumentData = {
       fileName: file.name,
-      filePath: file.path,
+      filePath: originalPath,  // 使用处理后的路径
       content: content  // 保存原始内容用于展示
     }
     
     const indexDoc: IndexDocument = {
-      id: file.path,
+      id: originalPath,  // 使用处理后的路径作为ID
       fileName: file.name,
       content: processedContent  // 使用处理后的内容用于索引
     }
     
-    console.log(`添加文档到索引: ${file.name}, 处理后内容预览: ${processedContent.substring(0, 200)}...`)
+    console.log(`添加文档到索引: ${file.name}, 路径: ${originalPath}`)
     index.value?.add(indexDoc)
-    documents.value.set(file.path, docData)
+    documents.value.set(originalPath, docData)  // 使用处理后的路径作为key
     console.log(`成功索引文件: ${file.name}`)
   } catch (error) {
     console.error(`索引文件 ${file.path} 时发生错误:`, error)
@@ -334,8 +349,8 @@ const getParentPath = (filePath: string) => {
   const parts = filePath.split('/')
   parts.pop() // 移除文件名
   const parentPath = parts.join('/')
-  // 确保路径末尾始终有一个 '/'
-  return parentPath.endsWith('/') ? parentPath : `${parentPath}/`
+  // 确保路径末尾始终有一个 '/'，并且以 '/docs' 开头
+  return parentPath === '/docs' ? '/docs/' : `${parentPath}/`
 }
 
 // 获取文件名（不含扩展名）
