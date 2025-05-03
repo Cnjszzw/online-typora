@@ -37,28 +37,15 @@ const searchQuery = ref('')
 const searchResults = ref<SearchResult[]>([])
 const isSearchMode = ref(false)
 const isLoading = ref(false)
+const isIndexing = ref(false)  // 添加索引构建状态
 const index = ref<any>(null)
 const documents = ref<Map<string, DocumentData>>(new Map())
 const searchInput = ref<HTMLInputElement | null>(null)
+const hasSearched = ref(false)  // 添加一个标记来跟踪是否已执行搜索
 
 // 创建搜索索引
-onMounted(async () => {
-  console.log('初始化搜索索引...')
-  // 创建索引实例，优化索引配置
-  index.value = new Document({
-    document: {
-      id: 'id',
-      index: ['content', 'fileName'],
-      store: true
-    },
-    tokenize: 'forward',
-    optimize: true,
-    resolution: 9,
-    minlength: 2,
-    context: true
-  })
-  
-  await buildIndex()
+onMounted(() => {
+  console.log('[Search] 组件挂载完成，准备初始化搜索功能...')
   
   // 自动聚焦搜索框
   nextTick(() => {
@@ -66,12 +53,41 @@ onMounted(async () => {
       searchInput.value.focus()
     }
   })
+
+  // 等待页面完全渲染后再构建索引
+  nextTick(async () => {
+    console.log('[Search] 页面渲染完成，开始初始化搜索索引...')
+    console.time('[Search] 索引构建总耗时')
+    
+    // 创建索引实例，优化索引配置
+    index.value = new Document({
+      document: {
+        id: 'id',
+        index: ['content', 'fileName'],
+        store: true
+      },
+      tokenize: 'forward',
+      resolution: 9,
+      context: true
+    })
+    
+    try {
+      await buildIndex()
+      console.log('[Search] 索引构建成功，搜索功能已就绪')
+    } catch (error) {
+      console.error('[Search] 索引构建失败:', error)
+    } finally {
+      console.timeEnd('[Search] 索引构建总耗时')
+    }
+  })
 })
 
 // 构建索引
 const buildIndex = async () => {
   try {
-    isLoading.value = true
+    console.log('[Search] 开始构建搜索索引...')
+    console.time('[Search] 文件列表获取耗时')
+    isIndexing.value = true  // 使用索引构建状态
     const isDev = import.meta.env.DEV
     
     // 修复API路径
@@ -79,26 +95,42 @@ const buildIndex = async () => {
       ? '/api/docs/list'  // 开发环境API
       : '/online-typora/docs-list.json' // 生产环境路径
     
-    console.log('开始获取文件列表:', listUrl)
+    console.log('[Search] 正在获取文件列表:', listUrl)
     const response = await fetch(listUrl)
     if (!response.ok) {
       throw new Error(`获取文件列表失败: ${response.status} ${response.statusText}`)
     }
     const files = await response.json()
-    console.log('获取到文件列表:', files)
+    console.timeEnd('[Search] 文件列表获取耗时')
+    console.log('[Search] 获取到文件列表，文件总数:', files.length)
     
     // 清空现有数据
     documents.value.clear()
     
     // 遍历所有文件构建索引
+    console.time('[Search] 文件索引构建耗时')
+    let processedFiles = 0
+    let totalFiles = 0
+    
+    const countFiles = (file: any): number => {
+      if (file.children) {
+        return file.children.reduce((sum: number, child: any) => sum + countFiles(child), 0)
+      }
+      return 1
+    }
+    
+    // 计算总文件数
+    totalFiles = files.reduce((sum: number, file: any) => sum + countFiles(file), 0)
+    console.log(`[Search] 待处理文件总数: ${totalFiles}`)
+    
     const processFile = async (file: any) => {
       if (file.children) {
-        console.log('处理文件夹:', file.name)
+        console.log('[Search] 处理文件夹:', file.name)
         for (const child of file.children) {
           await processFile(child)
         }
       } else {
-        console.log('准备索引文件:', file)
+        console.log(`[Search] 正在处理文件 (${++processedFiles}/${totalFiles}):`, file.name)
         // 根据环境构造正确的文件路径
         const filePath = isDev
           ? `/api/docs/content?path=${encodeURIComponent(file.path)}`  // 开发环境API
@@ -109,7 +141,7 @@ const buildIndex = async () => {
         } catch (error) {
           // 如果开发环境API失败，尝试直接读取文件
           if (isDev) {
-            console.log('开发环境API失败，尝试直接读取文件:', file.path)
+            console.log('[Search] 开发环境API失败，尝试直接读取文件:', file.path)
             await indexFile({...file, path: `/docs/${file.path}`})
           } else {
             throw error
@@ -119,23 +151,26 @@ const buildIndex = async () => {
     }
 
     // 开始处理所有文件
-    console.log('开始处理所有文件...')
+    console.log('[Search] 开始构建文件索引...')
     for (const file of files) {
       await processFile(file)
     }
-    console.log('索引构建完成，总文档数:', documents.value.size)
+    console.timeEnd('[Search] 文件索引构建耗时')
+    console.log('[Search] 索引构建完成，成功索引文档数:', documents.value.size)
     
   } catch (error) {
     console.error('构建索引时发生错误:', error)
   } finally {
-    isLoading.value = false
+    isIndexing.value = false  // 重置索引构建状态
   }
 }
 
 // 为单个文件建立索引
 const indexFile = async (file: any) => {
   try {
-    console.log(`开始获取文件内容: ${file.path}`)
+    console.log(`[Search] 开始处理文件: ${file.name}`)
+    console.time(`[Search] ${file.name} 处理耗时`)
+    
     const response = await fetch(file.path)
     if (!response.ok) {
       throw new Error(`获取文件内容失败: ${response.status} ${response.statusText}`)
@@ -144,15 +179,17 @@ const indexFile = async (file: any) => {
     
     // 检查内容是否为 HTML 或空
     if (!content.trim()) {
-      console.error(`文件 ${file.name} 内容为空`)
+      console.warn(`[Search] 警告: 文件 ${file.name} 内容为空，已跳过`)
       return
     }
     if (content.trim().toLowerCase().startsWith('<!doctype html')) {
       throw new Error('返回了HTML而不是Markdown内容')
     }
     
-    console.log(`正在索引文件: ${file.name}, 内容长度: ${content.length}`)
-    console.log(`文件内容预览: ${content.substring(0, 200)}...`) // 增加预览长度
+    console.log(`[Search] 文件 ${file.name} 内容获取成功，大小: ${(content.length / 1024).toFixed(2)}KB`)
+    if (content.length > 1000) {
+      console.log(`[Search] 文件内容预览: ${content.substring(0, 200)}...（已截断）`)
+    }
     
     // 预处理内容，保留更多有意义的字符
     const processedContent = content
@@ -206,7 +243,8 @@ const indexFile = async (file: any) => {
 const visibleMatches = computed(() => {
   return searchResults.value.map(result => ({
     ...result,
-    matches: result.isExpanded ? result.matches : result.matches.slice(0, 3)
+    matches: [...result.matches],
+    isExpanded: result.isExpanded
   }))
 })
 
@@ -214,6 +252,7 @@ const visibleMatches = computed(() => {
 const handleSearch = async () => {
   if (!searchQuery.value.trim() || !index.value) return
   
+  hasSearched.value = true  // 标记已执行搜索
   isLoading.value = true
   console.log(`开始搜索关键词: "${searchQuery.value}"`)
   
@@ -263,13 +302,13 @@ const handleSearch = async () => {
                 existingResult.matches = [...existingResult.matches, ...textMatches]
                 existingResult.totalMatches = existingResult.matches.length
               } else {
-                // 添加新的搜索结果
+                // 添加新的搜索结果，默认展开
                 processedResults.push({
                   fileName: doc.fileName,
                   filePath: id,
                   matches: textMatches,
                   totalMatches: textMatches.length,
-                  isExpanded: false
+                  isExpanded: true  // 默认展开
                 })
               }
             }
@@ -327,13 +366,24 @@ const findMatches = (content: string, query: string) => {
 }
 
 const toggleExpand = (result: SearchResult) => {
-  result.isExpanded = !result.isExpanded
+  console.log('切换展开状态:', result.fileName, '当前状态:', result.isExpanded)
+  const index = searchResults.value.findIndex(r => r.filePath === result.filePath)
+  if (index !== -1) {
+    // 创建新的结果对象以确保响应式更新
+    const updatedResult = {
+      ...searchResults.value[index],
+      isExpanded: !searchResults.value[index].isExpanded
+    }
+    // 使用数组方法触发响应式更新
+    searchResults.value.splice(index, 1, updatedResult)
+  }
 }
 
 const exitSearch = () => {
   isSearchMode.value = false
   searchQuery.value = ''
   searchResults.value = []
+  hasSearched.value = false  // 重置搜索状态
   emit('exit-search')
 }
 
@@ -383,18 +433,22 @@ const getFileExt = (fileName: string) => {
       />
     </div>
     
-    <div v-if="isLoading" class="loading">
+    <div v-if="isIndexing" class="loading">
+      正在准备搜索索引...
+    </div>
+    
+    <div v-else-if="isLoading" class="loading">
       正在搜索...
     </div>
     
-    <div v-else-if="searchResults.length === 0 && searchQuery" class="loading">
+    <div v-else-if="hasSearched && searchResults.length === 0 && searchQuery" class="loading">
       未找到匹配的结果
     </div>
     
     <div v-else class="search-results">
       <div v-for="result in visibleMatches" :key="result.filePath" class="result-item">
         <div class="result-header">
-          <div class="result-info">
+          <div class="result-info" @click="toggleExpand(result)">
             <div class="file-name">
               <strong>{{ getFileNameWithoutExt(result.fileName) }}</strong>{{ getFileExt(result.fileName) }}
             </div>
@@ -402,7 +456,11 @@ const getFileExt = (fileName: string) => {
           </div>
           <div class="result-actions">
             <span class="match-count">{{ result.totalMatches }}</span>
-            <button class="toggle-button" @click="toggleExpand(result)">
+            <button 
+              class="toggle-button" 
+              type="button" 
+              @click.stop="toggleExpand(result)"
+            >
               <img
                 src="/arrow-next-small-svgrepo-com.svg"
                 :class="{ expanded: result.isExpanded }"
@@ -412,14 +470,11 @@ const getFileExt = (fileName: string) => {
           </div>
         </div>
         
-        <div class="matches">
-          <div v-for="(match, index) in (result.isExpanded ? result.matches : result.matches.slice(0, 3))" 
+        <div class="matches" v-show="result.isExpanded">
+          <div v-for="(match, index) in result.matches" 
                :key="index" 
                class="match-item">
             <div class="match-content" v-html="highlightMatch(match.content, searchQuery)"></div>
-          </div>
-          <div v-if="!result.isExpanded && result.matches.length > 3" class="show-more">
-            <button @click="toggleExpand(result)">显示全部 {{ result.matches.length }} 处匹配</button>
           </div>
         </div>
       </div>
@@ -524,13 +579,14 @@ const getFileExt = (fileName: string) => {
   border-bottom: 1px solid #ccc !important;
   will-change: transform;
   transform: translateZ(0);
+  cursor: pointer;
 }
 
 .result-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 4px 12px;
+  padding: 8px 12px;
   position: relative;
   will-change: transform;
   transform: translateZ(0);
@@ -573,15 +629,11 @@ const getFileExt = (fileName: string) => {
 }
 
 .result-actions {
-  position: absolute; /* 修改为绝对定位 */
-  top: 5px; /* 固定在顶部 */
-  right: 12px; /* 右对齐 */
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   margin-left: auto;
-  will-change: transform;
-  transform: translateZ(0);
+  z-index: 1;  /* 确保按钮可以点击 */
 }
 
 .match-count {
@@ -608,16 +660,44 @@ const getFileExt = (fileName: string) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: none;
+  background: transparent;
   border: none;
   padding: 0;
   cursor: pointer;
+  outline: none !important;
+  position: relative;
+  z-index: 2;
+}
+
+/* 防止点击事件穿透 */
+.toggle-button, .match-count {
+  pointer-events: auto;
+}
+
+/* 修改标题区域的点击行为 */
+.result-header {
+  pointer-events: none;  /* 默认不接收点击事件 */
+}
+
+.result-info {
+  pointer-events: auto;  /* 允许文件名和路径接收点击事件 */
+  cursor: pointer;
+}
+
+.toggle-button:hover {
+  opacity: 0.8;
+}
+
+.toggle-button:focus {
+  outline: none;
 }
 
 .toggle-button img {
   width: 12px;
   height: 12px;
-  transition: transform 0.2s;
+  transition: transform 0.2s ease;
+  opacity: 0.6;
+  pointer-events: none; /* 防止图片干扰点击事件 */
 }
 
 .toggle-button img.expanded {
@@ -665,20 +745,6 @@ const getFileExt = (fileName: string) => {
 /* 当鼠标悬停时的效果 */
 .match-content :deep(.highlight):hover {
   background: rgba(255, 214, 0, 0.3);  /* 悬停时稍微加深 */
-}
-
-.show-more {
-  padding: 4px 0 0 0;
-}
-
-.show-more button {
-  font-size: 12px;
-  color: var(--primary-color);
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  text-decoration: underline;
 }
 
 .loading {

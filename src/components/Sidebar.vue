@@ -188,13 +188,17 @@ const showBackToTop = ref(false)
 let observer: IntersectionObserver | null = null
 let lastScrollTop = 0
 let scrollTimeout: number | null = null
-const tooltip = ref<HTMLElement | null>(null)
 const tooltipVisible = ref(false)
 const tooltipText = ref('')
 const currentTooltip = ref<'left' | 'right' | null>(null)
-const tooltipStyle = ref({
+const tooltipStyle = ref<{
+  display: string,
+  position: 'static' | 'relative' | 'absolute' | 'fixed' | 'sticky',
+  left: string,
+  top: string
+}>({
   display: 'none',
-  position: 'absolute' as const,
+  position: 'absolute',
   left: '0',
   top: '0'
 })
@@ -456,7 +460,7 @@ const showTooltip = (event: MouseEvent, text: string) => {
   
   if (currentTooltip.value === 'left') {
     tooltipStyle.value = {
-      position: 'fixed',
+      position: 'absolute',
       left: `${rect.right + 8}px`,
       top: `${rect.top + rect.height / 2 - 10}px`,
       display: 'block'

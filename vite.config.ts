@@ -16,7 +16,7 @@ export default defineConfig({
       name: 'docs-api',
       configureServer(server) {
         // 处理文件列表API
-        server.middlewares.use('/api/docs/list', (req, res) => {
+        server.middlewares.use('/api/docs/list', (_req, res) => {
           const docsPath = path.resolve(__dirname, 'public/docs')
           try {
             const files = scanDirectory(docsPath)
