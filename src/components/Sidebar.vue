@@ -1,6 +1,6 @@
 <template>
   <div class="sidebar">
-    <div class="tabs">
+    <div class="tabs" v-if="!showSearch">
       <div class="tab-container">
         <div class="left-section">
           <div class="icon-wrapper" 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { Document } from 'flexsearch'
 
 interface SearchResult {
@@ -19,6 +19,12 @@ interface DocumentData {
   content: string;
 }
 
+interface IndexDocument {
+  id: string;
+  content: string;
+  fileName: string;
+}
+
 const emit = defineEmits<{
   (e: 'exit-search'): void
 }>()
@@ -29,6 +35,7 @@ const isSearchMode = ref(false)
 const isLoading = ref(false)
 const index = ref<any>(null)
 const documents = ref<Map<string, DocumentData>>(new Map())
+const searchInput = ref<HTMLInputElement | null>(null)
 
 // 创建搜索索引
 onMounted(async () => {
@@ -38,10 +45,18 @@ onMounted(async () => {
     document: {
       id: 'id',
       index: ['content', 'fileName']
-    }
+    },
+    encode: (str: string) => str.split(/\s+/).filter(Boolean)
   })
   
   await buildIndex()
+  
+  // 自动聚焦搜索框
+  nextTick(() => {
+    if (searchInput.value) {
+      searchInput.value.focus()
+    }
+  })
 })
 
 // 构建索引
@@ -50,11 +65,9 @@ const buildIndex = async () => {
     isLoading.value = true
     const isDev = import.meta.env.DEV
     const url = isDev ? '/online-typora/api/docs/list' : '/online-typora/docs-list.json'
-    console.log('开始获取文件列表:', url)
     
     const response = await fetch(url)
     const files = await response.json()
-    console.log('获取到文件列表:', files.length, '个文件')
     
     // 清空现有数据
     documents.value.clear()
@@ -62,7 +75,6 @@ const buildIndex = async () => {
     // 遍历所有文件构建索引
     for (const file of files) {
       if (!file.children) { // 只索引文件，不索引文件夹
-        console.log('正在索引文件:', file.path)
         await indexFile(file)
       }
     }
@@ -76,19 +88,23 @@ const buildIndex = async () => {
 // 为单个文件建立索引
 const indexFile = async (file: any) => {
   try {
-    console.log('获取文件内容:', file.path)
     const response = await fetch(file.path)
     const content = await response.text()
     
-    const doc = {
+    const docData: DocumentData = {
+      fileName: file.name,
+      filePath: file.path,
+      content: content
+    }
+    
+    const indexDoc: IndexDocument = {
       id: file.path,
       fileName: file.name,
       content: content
     }
     
-    console.log('添加文件到索引:', file.name)
-    index.value?.add(doc)
-    documents.value.set(file.path, doc)
+    index.value?.add(indexDoc)
+    documents.value.set(file.path, docData)
   } catch (error) {
     console.error(`索引文件 ${file.path} 时发生错误:`, error)
   }
@@ -105,25 +121,20 @@ const visibleMatches = computed(() => {
 const handleSearch = async () => {
   if (!searchQuery.value.trim() || !index.value) return
   
-  isSearchMode.value = true
   isLoading.value = true
   
   try {
-    console.log('开始搜索:', searchQuery.value)
     const results = await index.value.search(searchQuery.value)
-    console.log('搜索结果:', results)
     
     // 处理搜索结果
     const processedResults: SearchResult[] = []
     
     for (const result of results) {
-      const field = result.field
       const matches = result.result
       
       for (const id of matches) {
         const doc = documents.value.get(id)
         if (doc) {
-          console.log('处理文档:', doc.fileName)
           const textMatches = findMatches(doc.content, searchQuery.value)
           
           // 检查是否已经添加过这个文档
@@ -146,8 +157,8 @@ const handleSearch = async () => {
       }
     }
     
-    searchResults.value = processedResults
-    console.log('处理后的搜索结果:', processedResults)
+    // 按匹配数量排序
+    searchResults.value = processedResults.sort((a, b) => b.totalMatches - a.totalMatches)
   } catch (error) {
     console.error('搜索时发生错误:', error)
   } finally {
@@ -157,12 +168,8 @@ const handleSearch = async () => {
 
 // 在文本中查找匹配项并获取上下文
 const findMatches = (content: string, query: string) => {
-  if (!content || !query) {
-    console.log('findMatches: 内容或查询为空')
-    return []
-  }
+  if (!content || !query) return []
   
-  console.log('查找匹配项, 内容长度:', content.length, '查询:', query)
   const matches = []
   const lines = content.split('\n')
   const queryRegex = new RegExp(query, 'gi')
@@ -170,7 +177,6 @@ const findMatches = (content: string, query: string) => {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i]
     if (queryRegex.test(line)) {
-      // 获取匹配位置
       queryRegex.lastIndex = 0 // 重置 lastIndex
       const match = queryRegex.exec(line)
       if (match) {
@@ -190,7 +196,6 @@ const findMatches = (content: string, query: string) => {
     }
   }
   
-  console.log('找到匹配项数量:', matches.length)
   return matches
 }
 
@@ -218,6 +223,18 @@ const getParentPath = (filePath: string) => {
   parts.pop() // 移除文件名
   return parts.join('/')
 }
+
+// 获取文件名（不含扩展名）
+const getFileNameWithoutExt = (fileName: string) => {
+  const lastDotIndex = fileName.lastIndexOf('.')
+  return lastDotIndex > -1 ? fileName.slice(0, lastDotIndex) : fileName
+}
+
+// 获取文件扩展名（包含点号）
+const getFileExt = (fileName: string) => {
+  const lastDotIndex = fileName.lastIndexOf('.')
+  return lastDotIndex > -1 ? fileName.slice(lastDotIndex) : ''
+}
 </script>
 
 <template>
@@ -226,26 +243,33 @@ const getParentPath = (filePath: string) => {
       <button class="back-button" @click="exitSearch">
         <img src="/back.svg" alt="返回" />
       </button>
-      <div class="search-input-container">
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="查找/搜索"
-          @keyup.enter="handleSearch"
-        />
-      </div>
+      <input
+        v-model="searchQuery"
+        type="text"
+        placeholder="搜索文档..."
+        @keyup.enter="handleSearch"
+        class="search-input"
+        ref="searchInput"
+        autofocus
+      />
     </div>
     
     <div v-if="isLoading" class="loading">
-      正在加载...
+      正在搜索...
+    </div>
+    
+    <div v-else-if="searchResults.length === 0 && searchQuery" class="loading">
+      未找到匹配的结果
     </div>
     
     <div v-else class="search-results">
       <div v-for="result in visibleMatches" :key="result.filePath" class="result-item">
         <div class="result-header">
           <div class="result-info">
-            <strong>{{ result.fileName }}</strong>
-            <span class="result-path">{{ getParentPath(result.filePath) }}</span>
+            <div class="file-name">
+              <strong>{{ getFileNameWithoutExt(result.fileName) }}</strong>{{ getFileExt(result.fileName) }}
+            </div>
+            <div class="result-path">{{ getParentPath(result.filePath) }}</div>
           </div>
           <div class="result-actions">
             <span class="match-count">{{ result.totalMatches }}</span>
@@ -260,11 +284,13 @@ const getParentPath = (filePath: string) => {
         </div>
         
         <div class="matches">
-          <div v-for="(match, index) in result.matches" :key="index" class="match-item">
+          <div v-for="(match, index) in (result.isExpanded ? result.matches : result.matches.slice(0, 3))" 
+               :key="index" 
+               class="match-item">
             <div class="match-content" v-html="highlightMatch(match.content, searchQuery)"></div>
           </div>
           <div v-if="!result.isExpanded && result.matches.length > 3" class="show-more">
-            <button @click="toggleExpand(result)">展示更多结果</button>
+            <button @click="toggleExpand(result)">显示全部 {{ result.matches.length }} 处匹配</button>
           </div>
         </div>
       </div>
@@ -274,18 +300,29 @@ const getParentPath = (filePath: string) => {
 
 <style scoped>
 .search-container {
-  display: flex;
-  flex-direction: column;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 300px; /* 设置固定宽度，与sidebar宽度一致 */
   height: 100%;
   background: var(--background-color);
   font-size: 14px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border-color);
 }
 
 .search-header {
+  height: 48px;
   display: flex;
   align-items: center;
-  padding: 8px;
+  padding: 0 12px;
   border-bottom: 1px solid var(--border-color);
+  background: var(--background-color);
+  position: sticky;
+  top: 0;
+  z-index: 101;
 }
 
 .back-button {
@@ -294,62 +331,95 @@ const getParentPath = (filePath: string) => {
   padding: 4px;
   cursor: pointer;
   margin-right: 8px;
+  display: flex;
+  align-items: center;
 }
 
 .back-button img {
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
 }
 
-.search-input-container {
+.search-input {
   flex: 1;
-}
-
-.search-input-container input {
-  width: 100%;
-  padding: 6px 12px;
+  height: 32px;
+  padding: 0 12px;
   border: 1px solid var(--border-color);
   border-radius: 4px;
   background: var(--background-color);
   color: var(--text-color);
   font-size: 14px;
+  width: calc(100% - 40px);
+  caret-color: var(--primary-color); /* 设置光标颜色 */
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--border-color);
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+}
+
+.search-input::placeholder {
+  color: var(--text-color-light);
+  opacity: 0.7;
 }
 
 .search-results {
   flex: 1;
   overflow-y: auto;
-  padding: 16px;
+  padding: 0;
+  width: 100%;
 }
 
 .result-item {
-  margin-bottom: 16px;
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 0;
+  text-align: left;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .result-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
-  background: var(--background-color-light);
-  border-bottom: 1px solid var(--border-color);
+  padding: 12px;
+  gap: 8px;
 }
 
 .result-info {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.file-name {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-name strong {
+  font-weight: 600;
+}
+
+.result-path {
+  color: var(--text-color-light);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .result-actions {
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.result-path {
-  color: var(--text-color-light);
+  flex-shrink: 0;
 }
 
 .match-count {
@@ -357,23 +427,23 @@ const getParentPath = (filePath: string) => {
   color: var(--text-color-light);
   padding: 2px 6px;
   border-radius: 4px;
-  min-width: 20px;
+  font-size: 12px;
+  min-width: 24px;
   text-align: center;
 }
 
 .toggle-button {
   background: none;
   border: none;
-  padding: 0;
+  padding: 4px;
   cursor: pointer;
   display: flex;
   align-items: center;
-  height: 20px;
 }
 
 .toggle-button img {
-  width: 16px;
-  height: 16px;
+  width: 12px;
+  height: 12px;
   transition: transform 0.2s;
 }
 
@@ -382,7 +452,7 @@ const getParentPath = (filePath: string) => {
 }
 
 .matches {
-  padding: 8px 12px;
+  padding: 0 12px 12px 36px;
 }
 
 .match-item {
@@ -390,21 +460,25 @@ const getParentPath = (filePath: string) => {
 }
 
 .match-content {
-  font-family: inherit;
-  overflow-wrap: break-word;
-  word-break: break-all;
-  line-height: 1.5;
+  font-family: monospace;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-color-light);
 }
 
 .match-content :deep(.highlight) {
   background: var(--highlight-color);
-  padding: 2px;
+  color: var(--text-color);
+  padding: 1px 2px;
   border-radius: 2px;
+  font-weight: 500;
 }
 
 .show-more {
   text-align: left;
-  margin-top: 8px;
+  padding-top: 8px;
 }
 
 .show-more button {
@@ -412,16 +486,16 @@ const getParentPath = (filePath: string) => {
   border: none;
   color: var(--primary-color);
   cursor: pointer;
-  text-decoration: underline;
-  font-size: 14px;
+  font-size: 13px;
   padding: 0;
+  text-decoration: underline;
 }
 
 .loading {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100px;
+  height: 100%;
   color: var(--text-color-light);
 }
 </style> 
