@@ -652,11 +652,19 @@ const getFileExt = (fileName: string) => {
 }
 
 .match-content :deep(.highlight) {
-  background: var(--highlight-color);
-  color: var(--text-color);
-  padding: 0px 0px;
-  border-radius: 2px;
-  font-weight: 500;
+  background: rgba(255, 214, 0, 0.2);  /* 非常淡的金色背景 */
+  color: inherit;  /* 继承父元素的文字颜色 */
+  padding: 0 2px;  /* 减小内边距 */
+  border-radius: 2px;  /* 更小的圆角 */
+  font-weight: 500;  /* 稍微加粗 */
+  margin: 0;  /* 移除边距 */
+  position: relative;
+  transition: background-color 0.2s ease;  /* 平滑过渡 */
+}
+
+/* 当鼠标悬停时的效果 */
+.match-content :deep(.highlight):hover {
+  background: rgba(255, 214, 0, 0.3);  /* 悬停时稍微加深 */
 }
 
 .show-more {
