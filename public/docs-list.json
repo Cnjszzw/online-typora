@@ -1,8 +1,16 @@
 [
   {
+    "name": "c.md",
+    "path": "docs\\c.md"
+  },
+  {
     "name": "folder1",
     "path": "docs\\folder1",
     "children": [
+      {
+        "name": "a.md",
+        "path": "docs\\folder1\\a.md"
+      },
       {
         "name": "test - 副本.md",
         "path": "docs\\folder1\\test - 副本.md"
@@ -13,6 +21,10 @@
     "name": "folder2",
     "path": "docs\\folder2",
     "children": [
+      {
+        "name": "b.md",
+        "path": "docs\\folder2\\b.md"
+      },
       {
         "name": "test - 副本.md",
         "path": "docs\\folder2\\test - 副本.md"
