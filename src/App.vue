@@ -29,6 +29,41 @@ const headingRefs = ref<Map<string, HTMLElement>>(new Map())
 // 定义 currentDir 变量
 const currentDir = ref('')
 
+// 获取基础路径
+const getBasePath = () => {
+  const isDev = import.meta.env.DEV
+  return isDev ? '/online-typora' : '/online-typora'
+}
+
+// 处理文件路径
+const processPath = (path: string, currentDir: string) => {
+  // 如果是绝对路径或 HTTP 链接，直接返回
+  if (path.startsWith('http') || path.startsWith('/')) {
+    return path
+  }
+
+  const basePath = getBasePath()
+  
+  // 如果没有当前目录，使用默认路径
+  if (!currentDir) {
+    return `${basePath}/docs/${path.replace(/^\.\//, '')}`
+  }
+
+  // 处理 ../ 开头的路径
+  if (path.startsWith('../')) {
+    const parentDir = currentDir.split('/').slice(0, -2).join('/') + '/'
+    return `${basePath}${parentDir}${path.substring(3)}`
+  }
+
+  // 处理 ./ 开头的路径
+  if (path.startsWith('./')) {
+    return `${basePath}${currentDir}${path.substring(2)}`
+  }
+
+  // 处理其他相对路径
+  return `${basePath}${currentDir}${path}`
+}
+
 // 配置 markdown-it
 const md = new MarkdownIt({
   html: true,        // 启用 HTML 标签
@@ -99,22 +134,8 @@ md.renderer.rules.image = function (tokens: any[], idx: number, _options: any, _
   console.log('处理图片:', { src, alt, currentDir: currentDir.value })
   
   // 处理相对路径
-  let finalSrc = src
-  if (!src.startsWith('http') && !src.startsWith('/')) {
-    if (src.startsWith('./')) {
-      // 将 ./assets/ 转换为相对于当前文件的路径
-      finalSrc = currentDir.value + src.substring(2)
-      console.log('处理 ./ 开头的路径:', { 原始路径: src, 当前目录: currentDir.value, 最终路径: finalSrc })
-    } else if (src.startsWith('../')) {
-      // 处理上级目录的路径
-      finalSrc = currentDir.value + src
-      console.log('处理 ../ 开头的路径:', { 原始路径: src, 当前目录: currentDir.value, 最终路径: finalSrc })
-    } else {
-      // 其他情况，假设是相对于当前目录的路径
-      finalSrc = currentDir.value + src
-      console.log('处理普通相对路径:', { 原始路径: src, 当前目录: currentDir.value, 最终路径: finalSrc })
-    }
-  }
+  const finalSrc = processPath(src, currentDir.value)
+  console.log('处理后的图片路径:', { 原始路径: src, 当前目录: currentDir.value, 最终路径: finalSrc })
   
   // 处理 zoom 样式
   let style = ''
@@ -129,16 +150,7 @@ md.renderer.rules.image = function (tokens: any[], idx: number, _options: any, _
   }
 
   // 添加错误处理
-  const img = new Image()
-  img.onerror = function() {
-    console.error('图片加载失败:', { 原始路径: src, 最终路径: finalSrc, 错误信息: this })
-  }
-  img.onload = function() {
-    console.log('图片加载成功:', { 原始路径: src, 最终路径: finalSrc })
-  }
-  img.src = finalSrc
-
-  return `<img src="${finalSrc}" alt="${alt}" style="${style}" loading="lazy" decoding="async" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'image-error\'>图片加载失败: ${alt || finalSrc}</div>';" />`
+  return `<img src="${finalSrc}" alt="${alt}" style="${style}" loading="lazy" decoding="async" onerror="console.error('图片加载失败:', { 原始路径: '${src}', 最终路径: '${finalSrc}', 错误信息: this }); this.onerror=null; this.parentElement.innerHTML='<div class=\\'image-error\\'>图片加载失败: ${alt || finalSrc}</div>';" />`
 }
 
 // 处理 HTML 标签中的图片
@@ -152,24 +164,15 @@ md.renderer.rules.html_block = function (tokens: any[], idx: number, _options: a
       // 提取 src 属性
       const srcMatch = attributes.match(/src=['"]([^'"]+)['"]/)
       if (srcMatch) {
-        let src = srcMatch[1]
+        const src = srcMatch[1]
         console.log('处理HTML中的图片:', { src, currentDir: currentDir.value })
+        
         // 处理相对路径
-        if (!src.startsWith('http') && !src.startsWith('/')) {
-          if (src.startsWith('./')) {
-            // 将 ./assets/ 转换为相对于当前文件的路径
-            src = currentDir.value + src.substring(2)
-          } else if (src.startsWith('../')) {
-            // 处理上级目录的路径
-            src = currentDir.value + src
-          } else {
-            // 其他情况，假设是相对于当前目录的路径
-            src = currentDir.value + src
-          }
-          console.log('处理后的HTML图片路径:', { 原始路径: srcMatch[1], 最终路径: src })
-        }
+        const finalSrc = processPath(src, currentDir.value)
+        console.log('处理后的HTML图片路径:', { 原始路径: src, 最终路径: finalSrc })
+        
         // 替换 src 属性
-        return _match.replace(/src=['"]([^'"]+)['"]/, `src="${src}"`)
+        return _match.replace(/src=['"]([^'"]+)['"]/, `src="${finalSrc}"`)
       }
       return _match
     })

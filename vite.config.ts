@@ -24,7 +24,13 @@ export default defineConfig({
     // 确保资源文件使用相对路径
     rollupOptions: {
       output: {
-        assetFileNames: 'assets/[name].[hash][extname]',
+        assetFileNames: (assetInfo) => {
+          // 保持 docs 目录下的文件结构
+          if (assetInfo.name && assetInfo.name.startsWith('public/docs/')) {
+            return assetInfo.name.replace('public/', '')
+          }
+          return 'assets/[name].[hash][extname]'
+        },
         chunkFileNames: 'assets/[name].[hash].js',
         entryFileNames: 'assets/[name].[hash].js',
       }
