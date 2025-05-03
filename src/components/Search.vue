@@ -221,7 +221,9 @@ const highlightMatch = (text: string, query: string) => {
 const getParentPath = (filePath: string) => {
   const parts = filePath.split('/')
   parts.pop() // 移除文件名
-  return parts.join('/')
+  const parentPath = parts.join('/')
+  // 确保路径末尾始终有一个 '/'
+  return parentPath.endsWith('/') ? parentPath : `${parentPath}/`
 }
 
 // 获取文件名（不含扩展名）
@@ -387,6 +389,7 @@ const getFileExt = (fileName: string) => {
   display: flex;
   align-items: center;
   padding: 4px 12px;
+  position: relative; /* 添加相对定位，使子元素可以绝对定位 */
 }
 
 .result-info {
@@ -420,11 +423,13 @@ const getFileExt = (fileName: string) => {
 }
 
 .result-actions {
+  position: absolute; /* 使用绝对定位 */
+  top: 0; /* 置于顶部 */
+  right: 12px; /* 置于右侧 */
   flex: 0 0 auto;
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-left: 8px;
 }
 
 .match-count {
@@ -469,7 +474,7 @@ const getFileExt = (fileName: string) => {
 }
 
 .match-content {
-  font-size: 15px;
+  font-size: 16px;
   color: var(--text-color-light);
   white-space: nowrap;
   overflow: hidden;
