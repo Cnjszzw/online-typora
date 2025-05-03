@@ -14,7 +14,7 @@
               class="tab-icon"
               @click="activeTab = activeTab === 'files' ? 'outline' : 'files'"
             />
-            <div class="custom-tooltip" v-show="tooltipVisible && currentTooltip === 'left'">
+            <div class="custom-tooltip" v-show="tooltipVisible && currentTooltip === 'left'" ref="tooltip" :style="tooltipStyle">
               {{ tooltipText }}
             </div>
           </div>
@@ -26,7 +26,7 @@
           <div class="icon-wrapper" 
             @mouseenter="showTooltip($event, '查找/搜索')" 
             @mouseleave="hideTooltip"
-            @click="handleIconClick"
+            @click="handleSearchClick"
           >
             <img 
               :src="searchIcon" 
@@ -40,9 +40,10 @@
         </div>
       </div>
     </div>
-    <div class="custom-tooltip" ref="tooltip" :style="tooltipStyle">{{ tooltipText }}</div>
     
-    <div v-if="activeTab === 'files'" class="file-tree">
+    <Search v-if="showSearch" @exit-search="showSearch = false" />
+    
+    <div v-else-if="activeTab === 'files'" class="file-tree">
       <template v-for="file in fileTree" :key="file.path">
         <div :class="['file-item', { 'is-selected': selectedFile === file.path }]">
           <div class="file-name" @click="handleFileSelect(file)">
@@ -151,6 +152,7 @@ import { ref, onMounted, watch, onUnmounted } from 'vue'
 import searchIcon from '/search.svg'
 import folderIcon from '/folder.svg'
 import hierarchyIcon from '/hierarchy.svg'
+import Search from './Search.vue'
 
 interface FileNode {
   name: string
@@ -195,6 +197,7 @@ const tooltipStyle = ref({
   left: '0',
   top: '0'
 })
+const showSearch = ref(false)
 
 // 获取存储的文档位置
 const getStoredScrollPosition = (filePath: string): number => {
@@ -436,6 +439,11 @@ const handleIconClick = () => {
   hideTooltip()
 }
 
+const handleSearchClick = () => {
+  showSearch.value = true
+  hideTooltip()
+}
+
 const showTooltip = (event: MouseEvent, text: string) => {
   tooltipText.value = text
   tooltipVisible.value = true
@@ -543,8 +551,8 @@ onUnmounted(() => {
 }
 
 .tab-icon {
-  width: 18px;
-  height: 18px;
+  width: 24px;
+  height: 24px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -552,8 +560,8 @@ onUnmounted(() => {
 }
 
 .search-icon {
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
   position: absolute;
   right: -10px;
   top: 11px;
