@@ -242,7 +242,7 @@ const getFileExt = (fileName: string) => {
 <template>
   <div class="search-container">
     <div class="search-header">
-      <button class="back-button" @click="exitSearch">
+      <button class="back-button" @click="exitSearch" title="返回文件列表">
         <img src="/back.svg" alt="返回" />
       </button>
       <input
@@ -311,6 +311,10 @@ const getFileExt = (fileName: string) => {
   display: flex;
   flex-direction: column;
   border-right: 1px solid var(--border-color);
+  user-select: none; /* 禁用文本选择 */
+  -webkit-user-select: none; /* Safari */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* IE/Edge */
 }
 
 .search-header {
@@ -326,8 +330,6 @@ const getFileExt = (fileName: string) => {
 
 }
 
-
-
 .back-button {
   flex: 0 0 32px;
   width: 32px;
@@ -340,11 +342,18 @@ const getFileExt = (fileName: string) => {
   padding: 0;
   margin: 0;
   cursor: pointer;
+  outline: none !important; /* 移除点击时的边框 */
+}
+
+.back-button:focus {
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .back-button img {
   width: 24px;
   height: 24px;
+  cursor: pointer;
 }
 
 .search-input {
@@ -357,6 +366,10 @@ const getFileExt = (fileName: string) => {
   background: var(--background-color);
   color: var(--text-color);
   font-size: 16px;
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
 }
 
 .search-input:focus {
@@ -482,6 +495,10 @@ const getFileExt = (fileName: string) => {
   overflow: hidden;
   text-overflow: ellipsis;
   text-align: left;
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
 }
 
 .match-content :deep(.highlight) {
