@@ -14,7 +14,7 @@
               class="tab-icon"
               @click="activeTab = activeTab === 'files' ? 'outline' : 'files'"
             />
-            <div class="custom-tooltip" v-show="tooltipVisible && currentTooltip === 'left'" ref="tooltip" :style="tooltipStyle">
+            <div class="custom-tooltip" v-show="tooltipVisible && currentTooltip === 'left'" :style="tooltipStyle">
               {{ tooltipText }}
             </div>
           </div>
@@ -33,7 +33,7 @@
               alt="search"
               class="tab-icon search-icon"
             />
-            <div class="custom-tooltip" v-show="tooltipVisible && currentTooltip === 'right'">
+            <div class="custom-tooltip" v-show="tooltipVisible && currentTooltip === 'right'" :style="tooltipStyle">
               {{ tooltipText }}
             </div>
           </div>
@@ -449,6 +449,26 @@ const showTooltip = (event: MouseEvent, text: string) => {
   tooltipText.value = text
   tooltipVisible.value = true
   currentTooltip.value = (event.currentTarget as HTMLElement).closest('.left-section') ? 'left' : 'right'
+  
+  // 计算 tooltip 的位置
+  const target = event.currentTarget as HTMLElement
+  const rect = target.getBoundingClientRect()
+  
+  if (currentTooltip.value === 'left') {
+    tooltipStyle.value = {
+      position: 'fixed',
+      left: `${rect.right + 8}px`,
+      top: `${rect.top + rect.height / 2 - 10}px`,
+      display: 'block'
+    }
+  } else {
+    tooltipStyle.value = {
+      position: 'fixed',
+      left: `${rect.left}px`,
+      top: `${rect.bottom + 2}px`,
+      display: 'block'
+    }
+  }
 }
 
 const hideTooltip = () => {
@@ -563,9 +583,7 @@ onUnmounted(() => {
 .search-icon {
   width: 24px;
   height: 24px;
-  position: absolute;
-  right: -10px;
-  top: 11px;
+  position: relative;
   cursor: pointer;
 }
 
@@ -764,6 +782,11 @@ onUnmounted(() => {
 
 .icon-wrapper {
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 24px;
 }
 
 .left-section .icon-wrapper {
@@ -774,13 +797,16 @@ onUnmounted(() => {
 }
 
 .right-section .icon-wrapper {
-  position: static;
+  position: relative;
   width: 100%;
   height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .custom-tooltip {
-  position: absolute;
+  position: fixed;
   z-index: 9999;
   background-color: #616161;
   color: white;
@@ -790,14 +816,6 @@ onUnmounted(() => {
   pointer-events: none;
   white-space: nowrap;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  left: 100%;
-  top: 100%;
-  margin-left: 5px;
-  margin-top: -10px;
-}
-
-.right-section .custom-tooltip {
-  right: -10px;
-  left: auto;
+  transition: opacity 0.2s;
 }
 </style> 
