@@ -474,7 +474,7 @@ const getFileExt = (fileName: string) => {
 }
 
 .matches {
-  padding: 0 12px 8px 12px;
+  padding: 0 12px 0px 12px;
 }
 
 .match-item {
