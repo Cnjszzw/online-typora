@@ -322,17 +322,11 @@ const getFileExt = (fileName: string) => {
   background: var(--background-color);
   position: relative;
   z-index: 2;
+  border-bottom: 1px solid #ccc !important; /* 添加灰色顶部边框 */
+
 }
 
-.search-header::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: var(--border-color);
-}
+
 
 .back-button {
   flex: 0 0 32px;
@@ -362,7 +356,7 @@ const getFileExt = (fileName: string) => {
   border-radius: 4px;
   background: var(--background-color);
   color: var(--text-color);
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .search-input:focus {
@@ -382,7 +376,7 @@ const getFileExt = (fileName: string) => {
 }
 
 .result-item {
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid #ccc !important; /* 添加灰色顶部边框 */
 }
 
 .result-header {
