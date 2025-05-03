@@ -44,13 +44,18 @@ const searchInput = ref<HTMLInputElement | null>(null)
 // 创建搜索索引
 onMounted(async () => {
   console.log('初始化搜索索引...')
-  // 创建索引实例
+  // 创建索引实例，优化索引配置
   index.value = new Document({
     document: {
       id: 'id',
-      index: ['content', 'fileName']
+      index: ['content', 'fileName'],
+      store: true
     },
-    encode: (str: string) => str.split(/\s+/).filter(Boolean)
+    tokenize: 'forward',
+    optimize: true,
+    resolution: 9,
+    minlength: 2,
+    context: true
   })
   
   await buildIndex()
@@ -68,20 +73,58 @@ const buildIndex = async () => {
   try {
     isLoading.value = true
     const isDev = import.meta.env.DEV
-    const url = isDev ? '/online-typora/api/docs/list' : '/online-typora/docs-list.json'
     
-    const response = await fetch(url)
+    // 修复API路径
+    const listUrl = isDev 
+      ? '/api/docs/list'  // 开发环境API
+      : '/online-typora/docs-list.json' // 生产环境路径
+    
+    console.log('开始获取文件列表:', listUrl)
+    const response = await fetch(listUrl)
+    if (!response.ok) {
+      throw new Error(`获取文件列表失败: ${response.status} ${response.statusText}`)
+    }
     const files = await response.json()
+    console.log('获取到文件列表:', files)
     
     // 清空现有数据
     documents.value.clear()
     
     // 遍历所有文件构建索引
-    for (const file of files) {
-      if (!file.children) { // 只索引文件，不索引文件夹
-        await indexFile(file)
+    const processFile = async (file: any) => {
+      if (file.children) {
+        console.log('处理文件夹:', file.name)
+        for (const child of file.children) {
+          await processFile(child)
+        }
+      } else {
+        console.log('准备索引文件:', file)
+        // 根据环境构造正确的文件路径
+        const filePath = isDev
+          ? `/api/docs/content?path=${encodeURIComponent(file.path)}`  // 开发环境API
+          : `/online-typora${file.path}`  // 生产环境路径
+        
+        try {
+          await indexFile({...file, path: filePath})
+        } catch (error) {
+          // 如果开发环境API失败，尝试直接读取文件
+          if (isDev) {
+            console.log('开发环境API失败，尝试直接读取文件:', file.path)
+            await indexFile({...file, path: `/docs/${file.path}`})
+          } else {
+            throw error
+          }
+        }
       }
     }
+
+    // 开始处理所有文件
+    console.log('开始处理所有文件...')
+    for (const file of files) {
+      await processFile(file)
+    }
+    console.log('索引构建完成，总文档数:', documents.value.size)
+    
   } catch (error) {
     console.error('构建索引时发生错误:', error)
   } finally {
@@ -92,25 +135,56 @@ const buildIndex = async () => {
 // 为单个文件建立索引
 const indexFile = async (file: any) => {
   try {
+    console.log(`开始获取文件内容: ${file.path}`)
     const response = await fetch(file.path)
+    if (!response.ok) {
+      throw new Error(`获取文件内容失败: ${response.status} ${response.statusText}`)
+    }
     const content = await response.text()
+    
+    // 检查内容是否为 HTML 或空
+    if (!content.trim()) {
+      console.error(`文件 ${file.name} 内容为空`)
+      return
+    }
+    if (content.trim().toLowerCase().startsWith('<!doctype html')) {
+      throw new Error('返回了HTML而不是Markdown内容')
+    }
+    
+    console.log(`正在索引文件: ${file.name}, 内容长度: ${content.length}`)
+    console.log(`文件内容预览: ${content.substring(0, 200)}...`) // 增加预览长度
+    
+    // 预处理内容，保留更多有意义的字符
+    const processedContent = content
+      .replace(/[^\w\s\u4e00-\u9fa5\-\[\]]/g, ' ')  // 保留中文字符、字母、数字、空格、连字符和方括号
+      .replace(/\s+/g, ' ')
+      .trim()
+    
+    // 如果处理后的内容为空，跳过索引
+    if (!processedContent.trim()) {
+      console.error(`文件 ${file.name} 处理后的内容为空`)
+      return
+    }
     
     const docData: DocumentData = {
       fileName: file.name,
       filePath: file.path,
-      content: content
+      content: content  // 保存原始内容用于展示
     }
     
     const indexDoc: IndexDocument = {
       id: file.path,
       fileName: file.name,
-      content: content
+      content: processedContent  // 使用处理后的内容用于索引
     }
     
+    console.log(`添加文档到索引: ${file.name}, 处理后内容预览: ${processedContent.substring(0, 200)}...`)
     index.value?.add(indexDoc)
     documents.value.set(file.path, docData)
+    console.log(`成功索引文件: ${file.name}`)
   } catch (error) {
     console.error(`索引文件 ${file.path} 时发生错误:`, error)
+    throw error  // 重新抛出错误以便上层处理
   }
 }
 
@@ -126,36 +200,64 @@ const handleSearch = async () => {
   if (!searchQuery.value.trim() || !index.value) return
   
   isLoading.value = true
+  console.log(`开始搜索关键词: "${searchQuery.value}"`)
   
   try {
-    const results = await index.value.search(searchQuery.value)
+    const searchStart = performance.now()
+    // 修改搜索选项
+    const results = await index.value.search(searchQuery.value, {
+      enrich: true,
+      suggest: true,
+      prefix: true,
+      fuzzy: 0.2,
+      boost: {
+        content: 2,
+        fileName: 1
+      }
+    })
+    const searchEnd = performance.now()
+    console.log(`搜索耗时: ${(searchEnd - searchStart).toFixed(2)}ms`)
+    console.log('原始搜索结果:', results)
     
     // 处理搜索结果
     const processedResults: SearchResult[] = []
     
-    for (const result of results) {
-      const matches = result.result
-      
-      for (const id of matches) {
-        const doc = documents.value.get(id)
-        if (doc) {
-          const textMatches = findMatches(doc.content, searchQuery.value)
+    if (results.length > 0) {
+      console.log('处理搜索结果:', results)
+      for (const result of results) {
+        console.log('处理单个结果:', result)
+        // 获取所有匹配的文档
+        const matchedDocs = result.result
+        console.log('匹配的文档:', matchedDocs)
+        
+        for (const matchedDoc of matchedDocs) {
+          // 从匹配结果中获取文档ID和内容
+          const id = matchedDoc.id
+          const doc = documents.value.get(id)
           
-          // 检查是否已经添加过这个文档
-          const existingResult = processedResults.find(r => r.filePath === id)
-          if (existingResult) {
-            // 合并匹配结果
-            existingResult.matches = [...existingResult.matches, ...textMatches]
-            existingResult.totalMatches = existingResult.matches.length
-          } else {
-            // 添加新的搜索结果
-            processedResults.push({
-              fileName: doc.fileName,
-              filePath: id,
-              matches: textMatches,
-              totalMatches: textMatches.length,
-              isExpanded: false
-            })
+          if (doc) {
+            console.log('处理文档:', doc.fileName)
+            const textMatches = findMatches(doc.content, searchQuery.value)
+            console.log(`文档 ${doc.fileName} 找到 ${textMatches.length} 处匹配:`, textMatches)
+            
+            if (textMatches.length > 0) {
+              // 检查是否已经添加过这个文档
+              const existingResult = processedResults.find(r => r.filePath === id)
+              if (existingResult) {
+                // 合并匹配结果
+                existingResult.matches = [...existingResult.matches, ...textMatches]
+                existingResult.totalMatches = existingResult.matches.length
+              } else {
+                // 添加新的搜索结果
+                processedResults.push({
+                  fileName: doc.fileName,
+                  filePath: id,
+                  matches: textMatches,
+                  totalMatches: textMatches.length,
+                  isExpanded: false
+                })
+              }
+            }
           }
         }
       }
@@ -163,6 +265,7 @@ const handleSearch = async () => {
     
     // 按匹配数量排序
     searchResults.value = processedResults.sort((a, b) => b.totalMatches - a.totalMatches)
+    console.log(`最终处理完成，共找到 ${searchResults.value.length} 个文档匹配，结果:`, searchResults.value)
   } catch (error) {
     console.error('搜索时发生错误:', error)
   } finally {
@@ -176,30 +279,35 @@ const findMatches = (content: string, query: string) => {
   
   const matches = []
   const lines = content.split('\n')
-  const queryRegex = new RegExp(query, 'gi')
+  // 优化正则表达式，支持中文搜索
+  const queryRegex = new RegExp(query.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'gi')
   
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i]
-    if (queryRegex.test(line)) {
+    const line = lines[i].trim()
+    if (line && queryRegex.test(line)) {
       queryRegex.lastIndex = 0 // 重置 lastIndex
-      const match = queryRegex.exec(line)
-      if (match) {
+      let match
+      while ((match = queryRegex.exec(line)) !== null) {
         const start = Math.max(match.index - 30, 0)
         const end = Math.min(match.index + query.length + 30, line.length)
-        let snippet = line.substring(start, end)
+        let snippet = line.substring(start, end).trim()
         
         // 添加省略号
         if (start > 0) snippet = '...' + snippet
         if (end < line.length) snippet = snippet + '...'
         
-        matches.push({
-          content: snippet,
-          lineNumber: i + 1
-        })
+        // 只有当片段中确实包含搜索词时才添加匹配
+        if (snippet.toLowerCase().includes(query.toLowerCase())) {
+          matches.push({
+            content: snippet,
+            lineNumber: i + 1
+          })
+        }
       }
     }
   }
   
+  console.log(`findMatches 找到 ${matches.length} 处匹配:`, matches)
   return matches
 }
 
@@ -217,7 +325,7 @@ const exitSearch = () => {
 // 高亮匹配文本
 const highlightMatch = (text: string, query: string) => {
   if (!query) return text
-  const regex = new RegExp(`(${query})`, 'gi')
+  const regex = new RegExp(`(${query.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi')
   return text.replace(regex, '<span class="highlight">$1</span>')
 }
 
@@ -424,7 +532,7 @@ const getFileExt = (fileName: string) => {
 }
 
 .file-name {
-  font-size: 14px;
+  font-size: 16px;
   color: var(--text-color);
   white-space: nowrap;
   overflow: hidden;

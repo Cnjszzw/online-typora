@@ -583,7 +583,9 @@ onUnmounted(() => {
 .search-icon {
   width: 24px;
   height: 24px;
-  position: relative;
+  position: absolute;
+  right: -10px;
+  top: 11px;
   cursor: pointer;
 }
 

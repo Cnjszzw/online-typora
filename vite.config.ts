@@ -11,7 +11,63 @@ export default defineConfig({
   base: '/online-typora/',
   plugins: [
     vue(),
-    docsScanner()
+    docsScanner(),
+    {
+      name: 'docs-api',
+      configureServer(server) {
+        // 处理文件列表API
+        server.middlewares.use('/api/docs/list', (req, res) => {
+          const docsPath = path.resolve(__dirname, 'public/docs')
+          try {
+            const files = scanDirectory(docsPath)
+            res.setHeader('Content-Type', 'application/json')
+            res.end(JSON.stringify(files))
+          } catch (error) {
+            console.error('Error scanning directory:', error)
+            res.statusCode = 500
+            res.end(JSON.stringify({ error: 'Internal server error' }))
+          }
+        })
+
+        // 处理文件内容API
+        server.middlewares.use('/api/docs/content', (req, res) => {
+          const url = new URL(req.url!, `http://${req.headers.host}`)
+          const filePath = url.searchParams.get('path')
+          
+          if (!filePath) {
+            res.statusCode = 400
+            res.end(JSON.stringify({ error: 'Missing path parameter' }))
+            return
+          }
+
+          const fullPath = path.resolve(__dirname, 'public', filePath)
+          
+          // 安全检查：确保文件路径在docs目录下
+          const docsPath = path.resolve(__dirname, 'public/docs')
+          if (!fullPath.startsWith(docsPath)) {
+            res.statusCode = 403
+            res.end(JSON.stringify({ error: 'Access denied' }))
+            return
+          }
+
+          try {
+            if (!fs.existsSync(fullPath)) {
+              res.statusCode = 404
+              res.end(JSON.stringify({ error: 'File not found' }))
+              return
+            }
+
+            const content = fs.readFileSync(fullPath, 'utf-8')
+            res.setHeader('Content-Type', 'text/plain')
+            res.end(content)
+          } catch (error) {
+            console.error('Error reading file:', error)
+            res.statusCode = 500
+            res.end(JSON.stringify({ error: 'Internal server error' }))
+          }
+        })
+      }
+    }
   ],
   resolve: {
     alias: {
@@ -83,4 +139,31 @@ export const configureServer = (server: ViteDevServer) => {
       next()
     }
   })
+}
+
+// 递归扫描目录
+function scanDirectory(dirPath: string, basePath = ''): any[] {
+  const items = fs.readdirSync(dirPath)
+  const result = []
+
+  for (const item of items) {
+    const fullPath = path.join(dirPath, item)
+    const relativePath = path.join('docs', basePath, item).replace(/\\/g, '/')
+    const stats = fs.statSync(fullPath)
+
+    if (stats.isDirectory()) {
+      result.push({
+        name: item,
+        path: relativePath,
+        children: scanDirectory(fullPath, path.join(basePath, item))
+      })
+    } else if (item.endsWith('.md')) {
+      result.push({
+        name: item,
+        path: relativePath
+      })
+    }
+  }
+
+  return result
 }
