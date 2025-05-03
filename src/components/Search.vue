@@ -386,7 +386,7 @@ const getFileExt = (fileName: string) => {
 .result-header {
   display: flex;
   align-items: center;
-  padding: 8px 12px;
+  padding: 4px 12px;
 }
 
 .result-info {
@@ -394,15 +394,17 @@ const getFileExt = (fileName: string) => {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .file-name {
-  font-size: 14px;
+  font-size: 16px;
   color: var(--text-color);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-align: left; /* 添加左对齐 */
+  font-weight: 800;
 }
 
 .file-name strong {
@@ -415,6 +417,7 @@ const getFileExt = (fileName: string) => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-align: left; /* 添加左对齐 */
 }
 
 .result-actions {
@@ -463,21 +466,22 @@ const getFileExt = (fileName: string) => {
 }
 
 .match-item {
-  padding: 6px 0;
+  padding: 0px 0px 6px 0px;
 }
 
 .match-content {
-  font-size: 12px;
+  font-size: 15px;
   color: var(--text-color-light);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-align: left; /* 添加左对齐 */
 }
 
 .match-content :deep(.highlight) {
   background: var(--highlight-color);
   color: var(--text-color);
-  padding: 1px 2px;
+  padding: 0px 0px;
   border-radius: 2px;
   font-weight: 500;
 }
