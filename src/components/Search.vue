@@ -25,6 +25,10 @@ interface IndexDocument {
   fileName: string;
 }
 
+const props = defineProps<{
+  sidebarWidth?: number
+}>()
+
 const emit = defineEmits<{
   (e: 'exit-search'): void
 }>()
@@ -240,7 +244,7 @@ const getFileExt = (fileName: string) => {
 </script>
 
 <template>
-  <div class="search-container">
+  <div class="search-container" :style="{ width: (props.sidebarWidth || 300) + 'px' }">
     <div class="search-header">
       <button class="back-button" @click="exitSearch" title="返回文件列表">
         <img src="/back.svg" alt="返回" />
@@ -302,19 +306,20 @@ const getFileExt = (fileName: string) => {
 
 <style scoped>
 .search-container {
-  position: absolute;
+  position: relative;
   top: 0;
   left: 0;
-  width: 300px;
-  height: 100vh;
+  height: 100%;
   background: var(--background-color);
   display: flex;
   flex-direction: column;
   border-right: 1px solid var(--border-color);
-  user-select: none; /* 禁用文本选择 */
-  -webkit-user-select: none; /* Safari */
-  -moz-user-select: none; /* Firefox */
-  -ms-user-select: none; /* IE/Edge */
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  will-change: width;
+  transform: translateZ(0);
 }
 
 .search-header {
@@ -326,8 +331,9 @@ const getFileExt = (fileName: string) => {
   background: var(--background-color);
   position: relative;
   z-index: 2;
-  border-bottom: 1px solid #ccc !important; /* 添加灰色顶部边框 */
-
+  border-bottom: 1px solid #ccc !important;
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 .back-button {
@@ -342,7 +348,7 @@ const getFileExt = (fileName: string) => {
   padding: 0;
   margin: 0;
   cursor: pointer;
-  outline: none !important; /* 移除点击时的边框 */
+  outline: none !important;
 }
 
 .back-button:focus {
@@ -385,11 +391,16 @@ const getFileExt = (fileName: string) => {
 .search-results {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   border-top: 1px solid var(--border-color);
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 .result-item {
-  border-bottom: 1px solid #ccc !important; /* 添加灰色顶部边框 */
+  border-bottom: 1px solid #ccc !important;
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 .result-header {
@@ -397,7 +408,9 @@ const getFileExt = (fileName: string) => {
   align-items: center;
   justify-content: space-between;
   padding: 4px 12px;
-  position: relative; /* 添加相对定位 */
+  position: relative;
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 .result-info {
@@ -406,15 +419,19 @@ const getFileExt = (fileName: string) => {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 .file-name {
-  font-size: 16px;
+  font-size: 14px;
   color: var(--text-color);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   text-align: left;
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 .file-name strong {
@@ -428,6 +445,8 @@ const getFileExt = (fileName: string) => {
   overflow: hidden;
   text-overflow: ellipsis;
   text-align: left;
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 .result-actions {
@@ -438,6 +457,8 @@ const getFileExt = (fileName: string) => {
   align-items: center;
   gap: 8px;
   margin-left: auto;
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 .match-count {
@@ -481,15 +502,19 @@ const getFileExt = (fileName: string) => {
 }
 
 .matches {
-  padding: 0 12px 0px 12px;
+  padding: 0 12px;
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 .match-item {
-  padding: 0px 0px 6px 0px;
+  padding: 4px 0;
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 .match-content {
-  font-size: 16px;
+  font-size: 14px;
   color: var(--text-color-light);
   white-space: nowrap;
   overflow: hidden;
@@ -499,6 +524,8 @@ const getFileExt = (fileName: string) => {
   -webkit-user-select: text;
   -moz-user-select: text;
   -ms-user-select: text;
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 .match-content :deep(.highlight) {
@@ -530,5 +557,35 @@ const getFileExt = (fileName: string) => {
   justify-content: center;
   color: var(--text-color-light);
   font-size: 14px;
+}
+
+/* 修改过渡动画 */
+.search-container {
+  transition: width 0s linear;
+}
+
+/* 修改滚动条样式 */
+.search-results::-webkit-scrollbar {
+  width: 6px;
+}
+
+.search-results::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.search-results::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 3px;
+}
+
+.search-results::-webkit-scrollbar-thumb:hover {
+  background: #999;
+}
+
+/* 添加性能优化相关的样式 */
+* {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  -moz-backface-visibility: hidden;
 }
 </style> 

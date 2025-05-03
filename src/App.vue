@@ -470,6 +470,7 @@ defineExpose({
           @file-select="handleFileSelect" 
           :outline="currentOutline"
           @scroll-to-heading="scrollToHeading"
+          :sidebar-width="sidebarWidth"
         />
       </div>
       <div 

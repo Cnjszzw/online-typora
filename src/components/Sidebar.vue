@@ -41,7 +41,7 @@
       </div>
     </div>
     
-    <Search v-if="showSearch" @exit-search="showSearch = false" />
+    <Search v-if="showSearch" @exit-search="showSearch = false" :sidebar-width="props.sidebarWidth" />
     
     <div v-else-if="activeTab === 'files'" class="file-tree">
       <template v-for="file in fileTree" :key="file.path">
@@ -171,6 +171,7 @@ interface OutlineItem {
 
 const props = defineProps<{
   outline: OutlineItem[]
+  sidebarWidth?: number
 }>()
 
 const emit = defineEmits<{
