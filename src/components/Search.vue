@@ -388,8 +388,8 @@ const getFileExt = (fileName: string) => {
 .result-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   padding: 4px 12px;
-  position: relative; /* 添加相对定位，使子元素可以绝对定位 */
 }
 
 .result-info {
@@ -406,7 +406,7 @@ const getFileExt = (fileName: string) => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  text-align: left; /* 添加左对齐 */
+  text-align: left;
 }
 
 .file-name strong {
@@ -419,17 +419,14 @@ const getFileExt = (fileName: string) => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  text-align: left; /* 添加左对齐 */
+  text-align: left;
 }
 
 .result-actions {
-  position: absolute; /* 使用绝对定位 */
-  top: 0; /* 置于顶部 */
-  right: 12px; /* 置于右侧 */
-  flex: 0 0 auto;
   display: flex;
   align-items: center;
   gap: 8px;
+  margin-left: auto;
 }
 
 .match-count {
@@ -440,6 +437,13 @@ const getFileExt = (fileName: string) => {
   border-radius: 4px;
   min-width: 24px;
   text-align: center;
+  box-sizing: border-box;
+  background-color: #f0f0f0;
+  border-right: 1px solid #eee;
+  border-top-left-radius: 3px;
+  border-bottom-left-radius: 3px;
+  border-top-right-radius: 3px;
+  border-bottom-right-radius: 3px;
 }
 
 .toggle-button {
@@ -479,7 +483,7 @@ const getFileExt = (fileName: string) => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  text-align: left; /* 添加左对齐 */
+  text-align: left;
 }
 
 .match-content :deep(.highlight) {
