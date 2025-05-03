@@ -390,6 +390,7 @@ const getFileExt = (fileName: string) => {
   align-items: center;
   justify-content: space-between;
   padding: 4px 12px;
+  position: relative; /* 添加相对定位 */
 }
 
 .result-info {
@@ -423,6 +424,9 @@ const getFileExt = (fileName: string) => {
 }
 
 .result-actions {
+  position: absolute; /* 修改为绝对定位 */
+  top: 5px; /* 固定在顶部 */
+  right: 12px; /* 右对齐 */
   display: flex;
   align-items: center;
   gap: 8px;
