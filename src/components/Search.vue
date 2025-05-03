@@ -303,60 +303,69 @@ const getFileExt = (fileName: string) => {
   position: absolute;
   top: 0;
   left: 0;
-  width: 300px; /* 设置固定宽度，与sidebar宽度一致 */
-  height: 100%;
+  width: 300px;
+  height: 100vh;
   background: var(--background-color);
-  font-size: 14px;
-  z-index: 100;
   display: flex;
   flex-direction: column;
   border-right: 1px solid var(--border-color);
 }
 
 .search-header {
-  height: 48px;
+  flex: 0 0 48px;
+  min-height: 48px;
   display: flex;
   align-items: center;
   padding: 0 12px;
-  border-bottom: 1px solid var(--border-color);
   background: var(--background-color);
-  position: sticky;
-  top: 0;
-  z-index: 101;
+  position: relative;
+  z-index: 2;
+}
+
+.search-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--border-color);
 }
 
 .back-button {
-  background: none;
-  border: none;
-  padding: 4px;
-  cursor: pointer;
-  margin-right: 8px;
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
 }
 
 .back-button img {
-  width: 16px;
-  height: 16px;
+  width: 24px;
+  height: 24px;
 }
 
 .search-input {
   flex: 1;
   height: 32px;
+  margin-left: 8px;
   padding: 0 12px;
   border: 1px solid var(--border-color);
   border-radius: 4px;
   background: var(--background-color);
   color: var(--text-color);
   font-size: 14px;
-  width: calc(100% - 40px);
-  caret-color: var(--primary-color); /* 设置光标颜色 */
 }
 
 .search-input:focus {
   outline: none;
   border-color: var(--border-color);
-  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
 }
 
 .search-input::placeholder {
@@ -367,78 +376,76 @@ const getFileExt = (fileName: string) => {
 .search-results {
   flex: 1;
   overflow-y: auto;
-  padding: 0;
-  width: 100%;
+  border-top: 1px solid var(--border-color);
 }
 
 .result-item {
-  border-bottom: 1px solid #e0e0e0;
-  padding: 0;
-  text-align: left;
-  width: 100%;
-  box-sizing: border-box;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .result-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 12px;
-  gap: 8px;
+  padding: 8px 12px;
 }
 
 .result-info {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-  flex: 1;
+  gap: 6px;
 }
 
 .file-name {
-  display: flex;
-  align-items: center;
+  font-size: 14px;
+  color: var(--text-color);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .file-name strong {
-  font-weight: 600;
+  font-weight: normal;
 }
 
 .result-path {
-  color: var(--text-color-light);
   font-size: 12px;
+  color: var(--text-color-light);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .result-actions {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-shrink: 0;
+  margin-left: 8px;
 }
 
 .match-count {
-  background: var(--background-color-dark);
+  font-size: 12px;
   color: var(--text-color-light);
   padding: 2px 6px;
+  background: var(--background-color-dark);
   border-radius: 4px;
-  font-size: 12px;
   min-width: 24px;
   text-align: center;
 }
 
 .toggle-button {
-  background: none;
-  border: none;
-  padding: 4px;
-  cursor: pointer;
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
 }
 
 .toggle-button img {
@@ -452,20 +459,19 @@ const getFileExt = (fileName: string) => {
 }
 
 .matches {
-  padding: 0 12px 12px 36px;
+  padding: 0 12px 8px 12px;
 }
 
 .match-item {
-  padding: 4px 0;
+  padding: 6px 0;
 }
 
 .match-content {
-  font-family: monospace;
-  font-size: 13px;
+  font-size: 12px;
+  color: var(--text-color-light);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: var(--text-color-light);
 }
 
 .match-content :deep(.highlight) {
@@ -477,25 +483,25 @@ const getFileExt = (fileName: string) => {
 }
 
 .show-more {
-  text-align: left;
-  padding-top: 8px;
+  padding: 4px 0 0 0;
 }
 
 .show-more button {
+  font-size: 12px;
+  color: var(--primary-color);
   background: none;
   border: none;
-  color: var(--primary-color);
-  cursor: pointer;
-  font-size: 13px;
   padding: 0;
+  cursor: pointer;
   text-decoration: underline;
 }
 
 .loading {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100%;
   color: var(--text-color-light);
+  font-size: 14px;
 }
 </style> 
