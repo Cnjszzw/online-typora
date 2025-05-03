@@ -404,11 +404,10 @@ const getFileExt = (fileName: string) => {
   overflow: hidden;
   text-overflow: ellipsis;
   text-align: left; /* 添加左对齐 */
-  font-weight: 800;
 }
 
 .file-name strong {
-  font-weight: normal;
+  font-weight: 900;
 }
 
 .result-path {
