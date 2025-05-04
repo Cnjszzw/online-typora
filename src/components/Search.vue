@@ -134,7 +134,7 @@ const buildIndex = async () => {
         // 根据环境构造正确的文件路径
         const filePath = isDev
           ? `/api/docs/content?path=${encodeURIComponent(file.path)}`  // 开发环境API
-          : `/online-typora${file.path}`  // 生产环境路径
+          : `/online-typora/${file.path.replace(/\\/g, '/')}`  // 生产环境路径，确保使用正斜杠
         
         try {
           await indexFile({...file, path: filePath})
@@ -213,8 +213,8 @@ const indexFile = async (file: any) => {
     originalPath = originalPath.replace(/\\/g, '/')
     // 移除开头的 'docs/' 如果存在
     originalPath = originalPath.replace(/^docs\//, '')
-    // 添加 '/docs/' 前缀
-    originalPath = '/docs/' + originalPath
+    // 添加正确的前缀
+    originalPath = '/online-typora/' + originalPath
     
     console.log('处理后的文件路径:', originalPath)
     
