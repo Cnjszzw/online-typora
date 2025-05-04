@@ -455,31 +455,31 @@ const handleSearchClick = () => {
   hideTooltip()
 }
 
-const showTooltip = (event: MouseEvent, text: string) => {
-  tooltipText.value = text
-  tooltipVisible.value = true
-  currentTooltip.value = (event.currentTarget as HTMLElement).closest('.left-section') ? 'left' : 'right'
-  
-  // 计算 tooltip 的位置
-  const target = event.currentTarget as HTMLElement
-  const rect = target.getBoundingClientRect()
-  
-  if (currentTooltip.value === 'left') {
-    tooltipStyle.value = {
-      position: 'absolute',
-      left: `${rect.right + 8}px`,
-      top: `${rect.top + rect.height / 2 - 10}px`,
-      display: 'block'
-    }
-  } else {
-    tooltipStyle.value = {
-      position: 'fixed',
-      left: `${rect.left}px`,
-      top: `${rect.bottom + 2}px`,
-      display: 'block'
-    }
-  }
-}
+// const showTooltip = (event: MouseEvent, text: string) => {
+//   tooltipText.value = text
+//   tooltipVisible.value = true
+//   currentTooltip.value = (event.currentTarget as HTMLElement).closest('.left-section') ? 'left' : 'right'
+//
+//   // 计算 tooltip 的位置
+//   const target = event.currentTarget as HTMLElement
+//   const rect = target.getBoundingClientRect()
+//
+//   if (currentTooltip.value === 'left') {
+//     tooltipStyle.value = {
+//       position: 'absolute',
+//       left: `${rect.right + 8}px`,
+//       top: `${rect.top + rect.height / 2 - 10}px`,
+//       display: 'block'
+//     }
+//   } else {
+//     tooltipStyle.value = {
+//       position: 'fixed',
+//       left: `${rect.left}px`,
+//       top: `${rect.bottom + 2}px`,
+//       display: 'block'
+//     }
+//   }
+// }
 
 const hideTooltip = () => {
   tooltipVisible.value = false
