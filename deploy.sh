@@ -16,13 +16,16 @@ cd dist
 # 创建 .nojekyll 文件，防止 GitHub Pages 忽略下划线开头的文件
 touch .nojekyll
 
+# 删除旧的 .git 目录（如果存在）
+rm -rf .git
+
 # 初始化 git 仓库
 git init
 git add -A
 git commit -m 'deploy'
 
 # 推送到 gh-pages 分支
-git push -f git@github.com:Cnjszzw/online-typora.git main:gh-pages
+git push -f git@github.com:Cnjszzw/online-typora.git master:gh-pages
 
 echo "部署完成！"
 

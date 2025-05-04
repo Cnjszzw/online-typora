@@ -29,51 +29,47 @@ const headingRefs = ref<Map<string, HTMLElement>>(new Map())
 // 定义 currentDir 变量
 const currentDir = ref('')
 
-// 获取基础路径
-const getBasePath = () => {
-  const isDev = import.meta.env.DEV
-  return isDev ? '/online-typora' : '/online-typora'
-}
-
 // 处理文件路径
 const processPath = (path: string, currentDir: string) => {
   // 如果是绝对路径或 HTTP 链接，直接返回
-  if (path.startsWith('http') || path.startsWith('/')) {
+  if (path.startsWith('http')) {
     return path
   }
 
-  const basePath = getBasePath()
+  const basePath = '/online-typora'
   
   // 标准化路径分隔符
   const normalizedPath = path.replace(/\\/g, '/')
-  const normalizedCurrentDir = currentDir ? currentDir.replace(/\\/g, '/') : ''
+  const normalizedCurrentDir = currentDir.replace(/\\/g, '/')
   
-  // 确保路径之间有且仅有一个斜杠
-  const joinPaths = (...parts: string[]) => {
-    return parts
-      .map(part => part.replace(/^\/+|\/+$/g, '')) // 移除开头和结尾的斜杠
-      .filter(Boolean) // 移除空字符串
-      .join('/')
-  }
-
-  // 如果没有当前目录，使用默认路径
+  // 如果路径以 ./ 开头，移除它
+  const cleanPath = normalizedPath.replace(/^\.\//, '')
+  
+  console.log('路径处理详情:', {
+    原始路径: path,
+    标准化路径: normalizedPath,
+    清理后路径: cleanPath,
+    当前目录: normalizedCurrentDir
+  })
+  
+  // 如果当前目录为空，说明路径解析有问题，尝试从文件路径中提取目录
   if (!normalizedCurrentDir) {
-    return '/' + joinPaths(basePath.replace(/^\/+|\/+$/g, ''), 'docs', normalizedPath.replace(/^\.\//, ''))
+    console.error('当前目录为空，这不应该发生。请检查文件路径解析逻辑。')
+    return `${basePath}/docs/${cleanPath}` // 降级处理
   }
-
+  
   // 处理 ../ 开头的路径
-  if (normalizedPath.startsWith('../')) {
-    const parentDir = normalizedCurrentDir.split('/').slice(0, -2).join('/')
-    return '/' + joinPaths(basePath.replace(/^\/+|\/+$/g, ''), parentDir, normalizedPath.substring(3))
+  if (cleanPath.startsWith('../')) {
+    const parentDir = normalizedCurrentDir.split('/').slice(0, -1).join('/')
+    const finalPath = `${basePath}/docs/${parentDir}/${cleanPath.substring(3)}`
+    console.log('../路径处理结果:', finalPath)
+    return finalPath
   }
-
-  // 处理 ./ 开头的路径
-  if (normalizedPath.startsWith('./')) {
-    return '/' + joinPaths(basePath.replace(/^\/+|\/+$/g, ''), normalizedCurrentDir, normalizedPath.substring(2))
-  }
-
-  // 处理其他相对路径
-  return '/' + joinPaths(basePath.replace(/^\/+|\/+$/g, ''), normalizedCurrentDir, normalizedPath)
+  
+  // 处理相对路径，确保不会重复添加docs
+  const finalPath = `${basePath}/docs/${normalizedCurrentDir.replace(/^docs\//, '')}/${cleanPath}`
+  console.log('相对路径处理结果:', finalPath)
+  return finalPath
 }
 
 // 配置 markdown-it
@@ -268,8 +264,17 @@ const loadMarkdownContent = async (filePath: string) => {
     const content = await response.text()
     
     // 获取当前文件的目录路径
-    currentDir.value = filePath.substring(0, filePath.lastIndexOf('/') + 1)
-    console.log('当前文件目录:', currentDir.value)
+    // 1. 移除开头的 /online-typora/docs/ 或 /docs/
+    const cleanPath = filePath.replace(/^\/?(online-typora\/)?docs\//, '')
+                             .replace(/\\/g, '/') // 统一使用正斜杠
+    // 2. 获取目录部分
+    currentDir.value = cleanPath.substring(0, cleanPath.lastIndexOf('/'))
+    
+    console.log('当前文件目录路径处理:', {
+      原始路径: filePath,
+      清理后路径: cleanPath,
+      最终目录: currentDir.value
+    })
     
     const renderedContent = md.render(content)
     markdownContent.value = renderedContent
