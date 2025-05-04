@@ -3,10 +3,13 @@
     <div class="tabs" v-if="!showSearch">
       <div class="tab-container">
         <div class="left-section">
-          <div class="icon-wrapper" 
-            @mouseenter="showTooltip($event, activeTab === 'files' ? '切换到大纲视图' : '切换到文件树视图')" 
-            @mouseleave="hideTooltip"
-            @click="handleIconClick"
+<!--          <div class="icon-wrapper" -->
+<!--            @mouseenter="showTooltip($event, activeTab === 'files' ? '切换到大纲视图' : '切换到文件树视图')" -->
+<!--            @mouseleave="hideTooltip"-->
+<!--            @click="handleIconClick"-->
+<!--          >-->
+          <div class="icon-wrapper"
+               @click="handleIconClick"
           >
             <img 
               :src="activeTab === 'files' ? folderIcon : hierarchyIcon" 
@@ -23,10 +26,13 @@
           <span class="tab-text">{{ activeTab === 'files' ? '文件' : '大纲' }}</span>
         </div>
         <div class="right-section">
-          <div class="icon-wrapper" 
-            @mouseenter="showTooltip($event, '查找/搜索')" 
-            @mouseleave="hideTooltip"
-            @click="handleSearchClick"
+<!--          <div class="icon-wrapper" -->
+<!--            @mouseenter="showTooltip($event, '查找/搜索')" -->
+<!--            @mouseleave="hideTooltip"-->
+<!--            @click="handleSearchClick"-->
+<!--          >-->
+          <div class="icon-wrapper"
+               @click="handleSearchClick"
           >
             <img 
               :src="searchIcon" 
@@ -589,7 +595,7 @@ onUnmounted(() => {
   height: 24px;
   position: absolute;
   right: -10px;
-  top: 11px;
+  top: 12px;
   cursor: pointer;
 }
 
