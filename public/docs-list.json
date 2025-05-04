@@ -1,42 +1,348 @@
 [
   {
-    "name": "c.md",
-    "path": "docs\\c.md"
-  },
-  {
-    "name": "folder1",
-    "path": "docs\\folder1",
+    "name": "articleDoc",
+    "path": "docs\\articleDoc",
     "children": [
       {
-        "name": "a.md",
-        "path": "docs\\folder1\\a.md"
+        "name": "companyDoc",
+        "path": "docs\\articleDoc\\companyDoc",
+        "children": [
+          {
+            "name": "WebRTC学习文档.md",
+            "path": "docs\\articleDoc\\companyDoc\\WebRTC学习文档.md"
+          },
+          {
+            "name": "wvb-server.md",
+            "path": "docs\\articleDoc\\companyDoc\\wvb-server.md"
+          },
+          {
+            "name": "wvb-ui.md",
+            "path": "docs\\articleDoc\\companyDoc\\wvb-ui.md"
+          },
+          {
+            "name": "wvb.md",
+            "path": "docs\\articleDoc\\companyDoc\\wvb.md"
+          },
+          {
+            "name": "wvp-pro文档.md",
+            "path": "docs\\articleDoc\\companyDoc\\wvp-pro文档.md"
+          },
+          {
+            "name": "上海寰创通信.md",
+            "path": "docs\\articleDoc\\companyDoc\\上海寰创通信.md"
+          },
+          {
+            "name": "业务.md",
+            "path": "docs\\articleDoc\\companyDoc\\业务.md"
+          },
+          {
+            "name": "前端项目结构文档.md",
+            "path": "docs\\articleDoc\\companyDoc\\前端项目结构文档.md"
+          },
+          {
+            "name": "可视化视频调度指挥平台 流程与原理-笔记.md",
+            "path": "docs\\articleDoc\\companyDoc\\可视化视频调度指挥平台 流程与原理-笔记.md"
+          },
+          {
+            "name": "国标点播流程",
+            "path": "docs\\articleDoc\\companyDoc\\国标点播流程",
+            "children": [
+              {
+                "name": "国标点播流程.md",
+                "path": "docs\\articleDoc\\companyDoc\\国标点播流程\\国标点播流程.md"
+              }
+            ]
+          },
+          {
+            "name": "安卓meshT点播流程",
+            "path": "docs\\articleDoc\\companyDoc\\安卓meshT点播流程",
+            "children": [
+              {
+                "name": "安卓meshT点播流程.md",
+                "path": "docs\\articleDoc\\companyDoc\\安卓meshT点播流程\\安卓meshT点播流程.md"
+              }
+            ]
+          },
+          {
+            "name": "安卓上线流程",
+            "path": "docs\\articleDoc\\companyDoc\\安卓上线流程",
+            "children": [
+              {
+                "name": "安卓上线流程.md",
+                "path": "docs\\articleDoc\\companyDoc\\安卓上线流程\\安卓上线流程.md"
+              }
+            ]
+          },
+          {
+            "name": "实时音视频技术学习文档.md",
+            "path": "docs\\articleDoc\\companyDoc\\实时音视频技术学习文档.md"
+          },
+          {
+            "name": "技术学习",
+            "path": "docs\\articleDoc\\companyDoc\\技术学习",
+            "children": [
+              {
+                "name": "DeferredResult.md",
+                "path": "docs\\articleDoc\\companyDoc\\技术学习\\DeferredResult.md"
+              },
+              {
+                "name": "ffmpeg&ffplay.md",
+                "path": "docs\\articleDoc\\companyDoc\\技术学习\\ffmpeg&ffplay.md"
+              },
+              {
+                "name": "GB28181.md",
+                "path": "docs\\articleDoc\\companyDoc\\技术学习\\GB28181.md"
+              },
+              {
+                "name": "Websocket.md",
+                "path": "docs\\articleDoc\\companyDoc\\技术学习\\Websocket.md"
+              },
+              {
+                "name": "前端调试入门秘籍",
+                "path": "docs\\articleDoc\\companyDoc\\技术学习\\前端调试入门秘籍",
+                "children": [
+                  {
+                    "name": "前端调试入门秘籍.md",
+                    "path": "docs\\articleDoc\\companyDoc\\技术学习\\前端调试入门秘籍\\前端调试入门秘籍.md"
+                  }
+                ]
+              },
+              {
+                "name": "安卓开发.md",
+                "path": "docs\\articleDoc\\companyDoc\\技术学习\\安卓开发.md"
+              }
+            ]
+          },
+          {
+            "name": "设计文档学习.md",
+            "path": "docs\\articleDoc\\companyDoc\\设计文档学习.md"
+          }
+        ]
       },
       {
-        "name": "test - 副本.md",
-        "path": "docs\\folder1\\test - 副本.md"
+        "name": "docusaurus.md",
+        "path": "docs\\articleDoc\\docusaurus.md"
+      },
+      {
+        "name": "技术文章推荐.md",
+        "path": "docs\\articleDoc\\技术文章推荐.md"
       }
     ]
   },
   {
-    "name": "folder2",
-    "path": "docs\\folder2",
+    "name": "defaultDoc",
+    "path": "docs\\defaultDoc",
     "children": [
       {
-        "name": "b.md",
-        "path": "docs\\folder2\\b.md"
+        "name": "Algorithm",
+        "path": "docs\\defaultDoc\\Algorithm",
+        "children": [
+          {
+            "name": "ACM模式.md",
+            "path": "docs\\defaultDoc\\Algorithm\\ACM模式.md"
+          },
+          {
+            "name": "Java_API.md",
+            "path": "docs\\defaultDoc\\Algorithm\\Java_API.md"
+          },
+          {
+            "name": "LeetCode Hot100.md",
+            "path": "docs\\defaultDoc\\Algorithm\\LeetCode Hot100.md"
+          },
+          {
+            "name": "代码随想录.md",
+            "path": "docs\\defaultDoc\\Algorithm\\代码随想录.md"
+          }
+        ]
       },
       {
-        "name": "test - 副本.md",
-        "path": "docs\\folder2\\test - 副本.md"
+        "name": "git.md",
+        "path": "docs\\defaultDoc\\git.md"
+      },
+      {
+        "name": "Intro.md",
+        "path": "docs\\defaultDoc\\Intro.md"
+      },
+      {
+        "name": "Java",
+        "path": "docs\\defaultDoc\\Java",
+        "children": [
+          {
+            "name": "JVM.md",
+            "path": "docs\\defaultDoc\\Java\\JVM.md"
+          },
+          {
+            "name": "动态代理.md",
+            "path": "docs\\defaultDoc\\Java\\动态代理.md"
+          },
+          {
+            "name": "并发编程.md",
+            "path": "docs\\defaultDoc\\Java\\并发编程.md"
+          },
+          {
+            "name": "集合.md",
+            "path": "docs\\defaultDoc\\Java\\集合.md"
+          }
+        ]
+      },
+      {
+        "name": "MyBatis.md",
+        "path": "docs\\defaultDoc\\MyBatis.md"
+      },
+      {
+        "name": "MySQL.md",
+        "path": "docs\\defaultDoc\\MySQL.md"
+      },
+      {
+        "name": "Redis.md",
+        "path": "docs\\defaultDoc\\Redis.md"
+      },
+      {
+        "name": "SpringBoot.md",
+        "path": "docs\\defaultDoc\\SpringBoot.md"
+      },
+      {
+        "name": "SpringCloud.md",
+        "path": "docs\\defaultDoc\\SpringCloud.md"
+      },
+      {
+        "name": "vue",
+        "path": "docs\\defaultDoc\\vue",
+        "children": [
+          {
+            "name": "vue3.md",
+            "path": "docs\\defaultDoc\\vue\\vue3.md"
+          }
+        ]
+      },
+      {
+        "name": "消息队列",
+        "path": "docs\\defaultDoc\\消息队列",
+        "children": [
+          {
+            "name": "RabbitMQ.md",
+            "path": "docs\\defaultDoc\\消息队列\\RabbitMQ.md"
+          },
+          {
+            "name": "RocketMQ.md",
+            "path": "docs\\defaultDoc\\消息队列\\RocketMQ.md"
+          }
+        ]
+      },
+      {
+        "name": "计算机网络.md",
+        "path": "docs\\defaultDoc\\计算机网络.md"
+      },
+      {
+        "name": "设计模式.md",
+        "path": "docs\\defaultDoc\\设计模式.md"
+      },
+      {
+        "name": "领域驱动设计.md",
+        "path": "docs\\defaultDoc\\领域驱动设计.md"
       }
     ]
   },
   {
-    "name": "test.md",
-    "path": "docs\\test.md"
+    "name": "interviewDoc",
+    "path": "docs\\interviewDoc",
+    "children": [
+      {
+        "name": "25春招.md",
+        "path": "docs\\interviewDoc\\25春招.md"
+      },
+      {
+        "name": "HR面试指南.md",
+        "path": "docs\\interviewDoc\\HR面试指南.md"
+      },
+      {
+        "name": "nexSea.md",
+        "path": "docs\\interviewDoc\\nexSea.md"
+      },
+      {
+        "name": "orderly.md",
+        "path": "docs\\interviewDoc\\orderly.md"
+      },
+      {
+        "name": "Project",
+        "path": "docs\\interviewDoc\\Project",
+        "children": [
+          {
+            "name": "仿B站项目.md",
+            "path": "docs\\interviewDoc\\Project\\仿B站项目.md"
+          },
+          {
+            "name": "数字化采集系统.md",
+            "path": "docs\\interviewDoc\\Project\\数字化采集系统.md"
+          },
+          {
+            "name": "美团JBOX环境治理工具.md",
+            "path": "docs\\interviewDoc\\Project\\美团JBOX环境治理工具.md"
+          }
+        ]
+      },
+      {
+        "name": "test.md",
+        "path": "docs\\interviewDoc\\test.md"
+      },
+      {
+        "name": "简历.md",
+        "path": "docs\\interviewDoc\\简历.md"
+      },
+      {
+        "name": "自我介绍.md",
+        "path": "docs\\interviewDoc\\自我介绍.md"
+      },
+      {
+        "name": "面试总结.md",
+        "path": "docs\\interviewDoc\\面试总结.md"
+      }
+    ]
   },
   {
-    "name": "test2 - 副本.md",
-    "path": "docs\\test2 - 副本.md"
+    "name": "test",
+    "path": "docs\\test",
+    "children": [
+      {
+        "name": "c.md",
+        "path": "docs\\test\\c.md"
+      },
+      {
+        "name": "folder1",
+        "path": "docs\\test\\folder1",
+        "children": [
+          {
+            "name": "a.md",
+            "path": "docs\\test\\folder1\\a.md"
+          },
+          {
+            "name": "test - 副本.md",
+            "path": "docs\\test\\folder1\\test - 副本.md"
+          }
+        ]
+      },
+      {
+        "name": "folder2",
+        "path": "docs\\test\\folder2",
+        "children": [
+          {
+            "name": "b.md",
+            "path": "docs\\test\\folder2\\b.md"
+          },
+          {
+            "name": "test - 副本.md",
+            "path": "docs\\test\\folder2\\test - 副本.md"
+          }
+        ]
+      },
+      {
+        "name": "test.md",
+        "path": "docs\\test\\test.md"
+      },
+      {
+        "name": "test2 - 副本.md",
+        "path": "docs\\test\\test2 - 副本.md"
+      }
+    ]
   }
 ]
