@@ -496,6 +496,18 @@ defineExpose({
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* 允许输入框和文本区域选中 */
+input, textarea {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
 }
 
 html, body {
@@ -577,12 +589,15 @@ html, body {
 
 .resize-handle {
   width: 4px;
-  background-color: #e0e0e0;
   cursor: col-resize;
+  background-color: transparent;
   transition: background-color 0.2s;
-  flex-shrink: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
   position: relative;
-  z-index: 1;
+  z-index: 10;
 }
 
 .resize-handle:hover {
@@ -596,6 +611,10 @@ html, body {
   flex-direction: column;
   height: 100%;
   min-width: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .main-content {
@@ -603,6 +622,10 @@ html, body {
   overflow-y: auto;
   width: 100%;
   height: 100%;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .markdown-content {
