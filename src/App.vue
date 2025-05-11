@@ -88,7 +88,16 @@ const md = new MarkdownIt({
     if (lang === 'url') {
       const lines = str.split('\n')
       const lineNumbers = lines.length === 1 && lines[0].trim() === '' ? '1' : lines.map((_, i) => i + 1).join('\n')
-      return `<pre class="code-block" data-lang="url"><code data-line-numbers="${lineNumbers}">${str}</code><button class="copy-button" title="复制代码"><img src="/online-typora/copy.svg" alt="copy" style="width: 14px; height: 14px;" /></button><button class="wrap-button" title="切换换行"><img src="/online-typora/return.svg" alt="wrap" style="width: 14px; height: 14px;" /></button></pre>`
+      return `<pre class="code-block" data-lang="${lang}">
+        <div class="lang-tag">${lang}</div>
+        <code data-line-numbers="${lineNumbers}">${str}</code>
+        <button class="copy-button" title="复制代码">
+          <img src="/online-typora/copy.svg" alt="copy" style="width: 14px; height: 14px;" />
+        </button>
+        <button class="wrap-button" title="切换换行">
+          <img src="/online-typora/return.svg" alt="wrap" style="width: 14px; height: 14px;" />
+        </button>
+      </pre>`
     }
     
     // 处理其他语言
@@ -98,7 +107,16 @@ const md = new MarkdownIt({
         const lines = str.split('\n')
         const lineNumbers = lines.length === 1 && lines[0].trim() === '' ? '1' : lines.map((_, i) => i + 1).join('\n')
         
-        return `<pre class="code-block" data-lang="${lang}"><code data-line-numbers="${lineNumbers}">${highlighted || ' '}</code><button class="copy-button" title="复制代码"><img src="/online-typora/copy.svg" alt="copy" style="width: 14px; height: 14px;" /></button><button class="wrap-button" title="切换换行"><img src="/online-typora/return.svg" alt="wrap" style="width: 14px; height: 14px;" /></button></pre>`
+        return `<pre class="code-block" data-lang="${lang}">
+          <div class="lang-tag">${lang}</div>
+          <code data-line-numbers="${lineNumbers}">${highlighted || ' '}</code>
+          <button class="copy-button" title="复制代码">
+            <img src="/online-typora/copy.svg" alt="copy" style="width: 14px; height: 14px;" />
+          </button>
+          <button class="wrap-button" title="切换换行">
+            <img src="/online-typora/return.svg" alt="wrap" style="width: 14px; height: 14px;" />
+          </button>
+        </pre>`
       } catch (err) {
         console.error('代码高亮失败:', err)
       }
@@ -107,7 +125,16 @@ const md = new MarkdownIt({
     // 对于不支持的语言，仍然显示代码块，但不进行高亮
     const lines = str.split('\n')
     const lineNumbers = lines.length === 1 && lines[0].trim() === '' ? '1' : lines.map((_, i) => i + 1).join('\n')
-    return `<pre class="code-block" data-lang="${lang || 'text'}"><code data-line-numbers="${lineNumbers}">${str}</code><button class="copy-button" title="复制代码"><img src="/online-typora/copy.svg" alt="copy" style="width: 14px; height: 14px;" /></button><button class="wrap-button" title="切换换行"><img src="/online-typora/return.svg" alt="wrap" style="width: 14px; height: 14px;" /></button></pre>`
+    return `<pre class="code-block" data-lang="${lang || 'text'}">
+      <div class="lang-tag">${lang || 'text'}</div>
+      <code data-line-numbers="${lineNumbers}">${str}</code>
+      <button class="copy-button" title="复制代码">
+        <img src="/online-typora/copy.svg" alt="copy" style="width: 14px; height: 14px;" />
+      </button>
+      <button class="wrap-button" title="切换换行">
+        <img src="/online-typora/return.svg" alt="wrap" style="width: 14px; height: 14px;" />
+      </button>
+    </pre>`
   }
 })
 
@@ -732,13 +759,13 @@ html, body {
 .markdown-content pre {
   position: relative;
   padding: 8px 4px;
-  padding-right: 8px; /* 减小右侧padding */
+  padding-right: 8px;
   font-size: 85%;
   line-height: 1.45;
   background-color: #f3f4f6;
   border-radius: 6px;
   margin: 4px 0;
-  overflow: hidden;
+  overflow: visible;
   display: flex;
   flex-direction: column;
   width: fit-content;
@@ -746,6 +773,28 @@ html, body {
   max-width: 100%;
   border: 1px solid #e5e7eb;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.markdown-content pre .lang-tag {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 2px 8px;
+  font-size: 12px;
+  color: #4b5563;
+  background-color: #ffffff;
+  border-bottom-left-radius: 3px;
+  border-left: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+  opacity: 1;
+  transition: opacity 0.2s ease;
+  z-index: 9999;
+  box-shadow: -2px 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.markdown-content pre:hover .lang-tag {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .markdown-content pre code {
@@ -766,7 +815,7 @@ html, body {
   padding-right: 8px;
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
-  z-index: 1; /* 确保滚动条在按钮下方 */
+  z-index: 1;
 }
 
 /* 自定义横向滚动条样式 */
@@ -794,26 +843,13 @@ html, body {
   background-color: transparent;
 }
 
-/* 代码语言标签样式调整 */
-.markdown-content pre::before {
-  content: attr(data-lang);
-  position: absolute;
-  top: 0;
-  right: 0;
-  padding: 2px 8px;
-  font-size: 12px;
-  color: #4b5563;
-  background-color: #ffffff;
-  border-bottom-left-radius: 3px;
-  border-left: 1px solid #e5e7eb;
-  border-bottom: 1px solid #e5e7eb;
-  opacity: 1;
-  transition: opacity 0.3s;
-  z-index: 2;
+/* 修改代码语言标签的实现方式 */
+.markdown-content pre {
+  counter-reset: line-number;
 }
 
-.markdown-content pre:hover::before {
-  opacity: 0;
+.markdown-content pre::before {
+  display: none;
 }
 
 /* 行号样式 */
@@ -858,7 +894,7 @@ html, body {
   align-items: center;
   justify-content: center;
   outline: none;
-  z-index: 3; /* 确保按钮在最上层 */
+  z-index: 3;
   border-radius: 3px;
 }
 
