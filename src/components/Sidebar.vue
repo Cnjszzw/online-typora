@@ -50,49 +50,13 @@
     <Search v-if="showSearch" @exit-search="showSearch = false" :sidebar-width="props.sidebarWidth" />
     
     <div v-else-if="activeTab === 'files'" class="file-tree">
-      <template v-for="file in fileTree" :key="file.path">
-        <div :class="['file-item', { 'is-selected': selectedFile === file.path }]">
-          <div class="file-name" @click="handleFileSelect(file)">
-            {{ file.name }}
-            <span v-if="file.children" class="arrow-icon" :class="{ expanded: file.isExpanded }" @click.stop="toggleFolder(file)">
-              <img src="/arrow-next-small-svgrepo-com.svg" alt="arrow" style="width: 12px; height: 12px;" />
-            </span>
-          </div>
-        </div>
-        <div v-if="file.children && file.isExpanded" class="children">
-          <template v-for="child in file.children" :key="child.path">
-            <div :class="['file-item', { 'is-selected': selectedFile === child.path }]">
-              <div class="file-name" @click="handleFileSelect(child)">
-                {{ child.name }}
-                <span v-if="child.children" class="arrow-icon" :class="{ expanded: child.isExpanded }" @click.stop="toggleFolder(child)">
-                  <img src="/arrow-next-small-svgrepo-com.svg" alt="arrow" style="width: 12px; height: 12px;" />
-                </span>
-              </div>
-            </div>
-            <div v-if="child.children && child.isExpanded" class="children">
-              <template v-for="grandChild in child.children" :key="grandChild.path">
-                <div :class="['file-item', { 'is-selected': selectedFile === grandChild.path }]">
-                  <div class="file-name" @click="handleFileSelect(grandChild)">
-                    {{ grandChild.name }}
-                    <span v-if="grandChild.children" class="arrow-icon" :class="{ expanded: grandChild.isExpanded }" @click.stop="toggleFolder(grandChild)">
-                      <img src="/arrow-next-small-svgrepo-com.svg" alt="arrow" style="width: 12px; height: 12px;" />
-                    </span>
-                  </div>
-                </div>
-                <div v-if="grandChild.children && grandChild.isExpanded" class="children">
-                  <template v-for="greatGrandChild in grandChild.children" :key="greatGrandChild.path">
-                    <div :class="['file-item', { 'is-selected': selectedFile === greatGrandChild.path }]">
-                      <div class="file-name" @click="handleFileSelect(greatGrandChild)">
-                        {{ greatGrandChild.name }}
-                      </div>
-                    </div>
-                  </template>
-                </div>
-              </template>
-            </div>
-          </template>
-        </div>
-      </template>
+      <FileTreeItem
+        v-for="file in fileTree"
+        :key="file.path"
+        :file="file"
+        :selected-file="selectedFile"
+        @file-select="handleFileSelect"
+      />
     </div>
     
     <div v-else class="outline">
@@ -159,6 +123,7 @@ import searchIcon from '/search.svg'
 import folderIcon from '/folder.svg'
 import hierarchyIcon from '/hierarchy.svg'
 import Search from './Search.vue'
+import FileTreeItem from './FileTreeItem.vue'
 
 interface FileNode {
   name: string
@@ -237,33 +202,29 @@ const toggleFolder = (file: FileNode) => {
   }
 }
 
-const handleFileSelect = (file: FileNode) => {
-  if (file.children) {
-    toggleFolder(file)
-  } else {
-    // 保存当前文档的位置
-    if (selectedFile.value) {
-      const mainContent = document.querySelector('.main-content')
-      if (mainContent) {
-        saveScrollPosition(selectedFile.value, mainContent.scrollTop)
-      }
+const handleFileSelect = (path: string) => {
+  // 保存当前文档的位置
+  if (selectedFile.value) {
+    const mainContent = document.querySelector('.main-content')
+    if (mainContent) {
+      saveScrollPosition(selectedFile.value, mainContent.scrollTop)
     }
-    
-    selectedFile.value = file.path
-    emit('file-select', file.path)
-    
-    // 等待文档加载完成后再恢复位置
-    const checkContentLoaded = () => {
-      const mainContent = document.querySelector('.main-content')
-      if (mainContent && mainContent.scrollHeight > 0) {
-        const storedPosition = getStoredScrollPosition(file.path)
-        mainContent.scrollTop = storedPosition
-      } else {
-        setTimeout(checkContentLoaded, 100)
-      }
-    }
-    checkContentLoaded()
   }
+  
+  selectedFile.value = path
+  emit('file-select', path)
+  
+  // 等待文档加载完成后再恢复位置
+  const checkContentLoaded = () => {
+    const mainContent = document.querySelector('.main-content')
+    if (mainContent && mainContent.scrollHeight > 0) {
+      const storedPosition = getStoredScrollPosition(path)
+      mainContent.scrollTop = storedPosition
+    } else {
+      setTimeout(checkContentLoaded, 100)
+    }
+  }
+  checkContentLoaded()
 }
 
 const toggleOutlineItem = (item: OutlineItem) => {
