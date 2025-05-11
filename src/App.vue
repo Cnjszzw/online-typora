@@ -214,6 +214,9 @@ const initCodeBlocks = () => {
     // 添加复制功能
     const copyButton = block.querySelector('.copy-button')
     if (copyButton) {
+      copyButton.innerHTML = `
+        <img src="/online-typora/copy.svg" alt="copy" style="width: 14px; height: 14px;" />
+      `
       copyButton.addEventListener('click', async () => {
         const code = block.querySelector('code')?.textContent || ''
         try {
@@ -231,9 +234,7 @@ const initCodeBlocks = () => {
           `
           setTimeout(() => {
             copyButton.innerHTML = `
-              <svg width="14" height="14" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-                <path d="M14 12V2H4V0h12v12h-2zM0 4h12v12H0V4zm2 2v8h8V6H2z" fill-rule="evenodd"/>
-              </svg>
+              <img src="/online-typora/copy.svg" alt="copy" style="width: 14px; height: 14px;" />
             `
           }, 1000)
         } catch (err) {
@@ -245,6 +246,9 @@ const initCodeBlocks = () => {
     // 添加换行功能
     const wrapButton = block.querySelector('.wrap-button')
     if (wrapButton) {
+      wrapButton.innerHTML = `
+        <img src="/online-typora/return.svg" alt="wrap" style="width: 14px; height: 14px;" />
+      `
       wrapButton.addEventListener('click', () => {
         const code = block.querySelector('code')
         if (code) {
@@ -686,7 +690,7 @@ html, body {
   padding: 2px 8px;
   font-size: 12px;
   color: #666;
-  background-color: #fff;
+  background-color: #e8eaed;
   border-bottom-left-radius: 3px;
   opacity: 1;
   transition: opacity 0.3s;
@@ -730,7 +734,7 @@ html, body {
   width: 24px;
   height: 24px;
   padding: 0;
-  background-color: #fff;
+  background-color: #e8eaed;
   border: none;
   cursor: pointer;
   opacity: 0;
@@ -740,6 +744,7 @@ html, body {
   justify-content: center;
   outline: none;
   z-index: 2;
+  border-radius: 3px;
 }
 
 .markdown-content pre .copy-button:focus {
@@ -754,7 +759,7 @@ html, body {
   width: 24px;
   height: 24px;
   padding: 0;
-  background-color: #fff;
+  background-color: #e8eaed;
   border: none;
   cursor: pointer;
   opacity: 0;
@@ -764,6 +769,7 @@ html, body {
   justify-content: center;
   outline: none;
   z-index: 2;
+  border-radius: 3px;
 }
 
 .markdown-content pre .wrap-button:focus {
@@ -791,14 +797,14 @@ html, body {
   animation: copySuccess 0.3s ease-in-out;
 }
 
-.markdown-content pre .copy-button svg,
-.markdown-content pre .wrap-button svg {
-  fill: #666;
+.markdown-content pre .copy-button:hover,
+.markdown-content pre .wrap-button:hover {
+  background-color: #d7d9dc;
 }
 
 .markdown-content pre .copy-button:hover svg,
 .markdown-content pre .wrap-button:hover svg {
-  fill: #666;
+  fill: #333;
 }
 
 .markdown-content img {
