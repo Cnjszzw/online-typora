@@ -91,9 +91,21 @@ const md = new MarkdownIt({
     const displayLines = isLongCode ? lines.slice(0, 30).join('\n') : str
     const hiddenLines = isLongCode ? lines.slice(30).join('\n') : ''
     
+    console.log('初始化代码块:', {
+      总行数: totalLines,
+      是否长代码: isLongCode,
+      显示行数: isLongCode ? 30 : totalLines,
+      隐藏行数: isLongCode ? totalLines - 30 : 0
+    })
+    
     // 生成行号
     const lineNumbers = Array.from({ length: isLongCode ? 30 : totalLines }, (_, i) => i + 1).join('\n')
     const hiddenLineNumbers = isLongCode ? Array.from({ length: totalLines - 30 }, (_, i) => i + 31).join('\n') : ''
+    
+    console.log('生成行号:', {
+      主要行号范围: `1-${isLongCode ? 30 : totalLines}`,
+      隐藏行号范围: isLongCode ? `31-${totalLines}` : '无'
+    })
     
     // 处理 URL 类型
     if (lang === 'url') {
@@ -125,14 +137,18 @@ const md = new MarkdownIt({
         const displayHighlighted = isLongCode ? hljs.highlight(displayLines, { language: lang }).value : highlighted
         const hiddenHighlighted = isLongCode ? hljs.highlight(hiddenLines, { language: lang }).value : ''
         
-        return `<pre class="code-block" data-lang="${lang}">
+        return `<pre class="code-block" data-lang="${lang}" data-total-lines="${totalLines}" data-display-lines="${isLongCode ? 30 : totalLines}" data-hidden-lines="${isLongCode ? totalLines - 30 : 0}">
           <div class="lang-tag">${lang}</div>
-          <code data-line-numbers="${lineNumbers}">${displayHighlighted || ' '}</code>
+          <div class="code-content-wrapper">
+            <code data-line-numbers="${lineNumbers}">${displayHighlighted || ' '}</code>
+            ${isLongCode ? `
+              <div class="hidden-code" style="display: none;">
+                <code data-line-numbers="${hiddenLineNumbers}">${hiddenHighlighted}</code>
+              </div>
+            ` : ''}
+          </div>
           ${isLongCode ? `
             <div class="code-expand-tip">展开显示剩余 ${totalLines - 30} 行代码 ...</div>
-            <div class="hidden-code" style="display: none;">
-              <code data-line-numbers="${hiddenLineNumbers}">${hiddenHighlighted}</code>
-            </div>
             <button class="expand-button" title="展开/收起代码">
               <img src="/online-typora/expand.svg" alt="expand" style="width: 14px; height: 14px;" />
             </button>
@@ -149,15 +165,19 @@ const md = new MarkdownIt({
       }
     }
     
-    // 对于不支持的语言，仍然显示代码块，但不进行高亮
-    return `<pre class="code-block" data-lang="${lang || 'text'}">
+    // 对于不支持的语言，使用相同的结构
+    return `<pre class="code-block" data-lang="${lang || 'text'}" data-total-lines="${totalLines}" data-display-lines="${isLongCode ? 30 : totalLines}" data-hidden-lines="${isLongCode ? totalLines - 30 : 0}">
       <div class="lang-tag">${lang || 'text'}</div>
-      <code data-line-numbers="${lineNumbers}">${displayLines}</code>
+      <div class="code-content-wrapper">
+        <code data-line-numbers="${lineNumbers}">${displayLines}</code>
+        ${isLongCode ? `
+          <div class="hidden-code" style="display: none;">
+            <code data-line-numbers="${hiddenLineNumbers}">${hiddenLines}</code>
+          </div>
+        ` : ''}
+      </div>
       ${isLongCode ? `
         <div class="code-expand-tip">展开显示剩余 ${totalLines - 30} 行代码 ...</div>
-        <div class="hidden-code" style="display: none;">
-          <code data-line-numbers="${hiddenLineNumbers}">${hiddenLines}</code>
-        </div>
         <button class="expand-button" title="展开/收起代码">
           <img src="/online-typora/expand.svg" alt="expand" style="width: 14px; height: 14px;" />
         </button>
@@ -324,60 +344,63 @@ const initCodeBlocks = () => {
         <img src="/online-typora/return.svg" alt="wrap" style="width: 14px; height: 14px;" />
       `
       wrapButton.addEventListener('click', () => {
+        const pre = block.closest('pre') as HTMLElement
         const code = block.querySelector('code') as HTMLElement
         const hiddenCode = block.querySelector('.hidden-code code') as HTMLElement | null
+        
+        const totalLines = parseInt(pre.getAttribute('data-total-lines') || '0')
+        const displayLines = parseInt(pre.getAttribute('data-display-lines') || '0')
+        const hiddenLines = parseInt(pre.getAttribute('data-hidden-lines') || '0')
+        
+        console.log('换行操作前状态:', {
+          总行数: totalLines,
+          显示行数: displayLines,
+          隐藏行数: hiddenLines,
+          当前行号: code.getAttribute('data-line-numbers'),
+          隐藏代码行号: hiddenCode?.getAttribute('data-line-numbers')
+        })
+        
         if (code) {
           const isWrapped = code.style.whiteSpace === 'pre-wrap'
           code.style.whiteSpace = isWrapped ? 'pre' : 'pre-wrap'
           if (hiddenCode) {
             hiddenCode.style.whiteSpace = isWrapped ? 'pre' : 'pre-wrap'
-        }
+          }
           
-          // 同时调整容器样式
-          const pre = block.closest('pre') as HTMLElement
-          if (pre) {
-            if (!isWrapped) {
-              // 换行模式
-              code.style.wordBreak = 'break-all'
-              if (hiddenCode) {
-                hiddenCode.style.wordBreak = 'break-all'
-              }
-            } else {
-              // 不换行模式
-              code.style.wordBreak = 'normal'
-              if (hiddenCode) {
-                hiddenCode.style.wordBreak = 'normal'
-              }
+          if (!isWrapped) {
+            // 换行模式
+            code.style.wordBreak = 'break-all'
+            if (hiddenCode) {
+              hiddenCode.style.wordBreak = 'break-all'
+            }
+          } else {
+            // 不换行模式
+            code.style.wordBreak = 'normal'
+            if (hiddenCode) {
+              hiddenCode.style.wordBreak = 'normal'
             }
           }
           
-          // 等待DOM更新完成后再计算行数
-          setTimeout(() => {
-            // 获取代码块的实际高度和行高
-            const computedStyle = window.getComputedStyle(code)
-            const lineHeight = parseFloat(computedStyle.lineHeight)
-            const codeHeight = code.clientHeight
-            const hiddenCodeHeight = hiddenCode ? hiddenCode.clientHeight : 0
-            
-            // 计算实际行数（包括换行）
-            const actualLines = Math.ceil(codeHeight / lineHeight)
-            const hiddenActualLines = Math.ceil(hiddenCodeHeight / lineHeight)
-            
-            // 生成新的行号
-            const lineNumbers = Array.from({ length: actualLines }, (_, i) => i + 1).join('\n')
-            const hiddenLineNumbers = Array.from({ length: hiddenActualLines }, (_, i) => actualLines + i + 1).join('\n')
-            
-            // 更新行号属性
-            code.setAttribute('data-line-numbers', lineNumbers)
-            if (hiddenCode) {
-              hiddenCode.setAttribute('data-line-numbers', hiddenLineNumbers)
-            }
-            
-            // 确保代码块高度适应内容
-            if (pre) {
-              pre.style.height = 'auto'
-            }
-          }, 100) // 增加延时以确保样式已应用
+          // 确保行号正确显示
+          const mainLineNumbers = Array.from({ length: displayLines }, (_, i) => i + 1).join('\n')
+          const hiddenLineNumbers = Array.from({ length: hiddenLines }, (_, i) => i + displayLines + 1).join('\n')
+          
+          code.setAttribute('data-line-numbers', mainLineNumbers)
+          if (hiddenCode) {
+            hiddenCode.setAttribute('data-line-numbers', hiddenLineNumbers)
+          }
+          
+          console.log('换行操作后状态:', {
+            换行模式: !isWrapped,
+            主要行号: mainLineNumbers,
+            隐藏行号: hiddenLineNumbers
+          })
+          
+          // 更新展开提示的行数
+          const tipElement = block.querySelector('.code-expand-tip') as HTMLElement
+          if (tipElement && hiddenLines > 0) {
+            tipElement.textContent = `展开显示剩余 ${hiddenLines} 行代码 ...`
+          }
         }
       })
     }
@@ -387,8 +410,20 @@ const initCodeBlocks = () => {
     const expandTip = block.querySelector('.code-expand-tip')
     
     const toggleExpand = () => {
+      const pre = block.closest('pre') as HTMLElement
       const hiddenCode = block.querySelector('.hidden-code') as HTMLElement
       const isExpanded = hiddenCode?.style.display !== 'none'
+      
+      const totalLines = parseInt(pre.getAttribute('data-total-lines') || '0')
+      const displayLines = parseInt(pre.getAttribute('data-display-lines') || '0')
+      const hiddenLines = parseInt(pre.getAttribute('data-hidden-lines') || '0')
+      
+      console.log('展开/收起操作前状态:', {
+        总行数: totalLines,
+        显示行数: displayLines,
+        隐藏行数: hiddenLines,
+        当前是否展开: !isExpanded
+      })
       
       if (hiddenCode) {
         hiddenCode.style.display = isExpanded ? 'none' : 'block'
@@ -401,10 +436,12 @@ const initCodeBlocks = () => {
         const tipElement = expandTip as HTMLElement
         if (tipElement) {
           tipElement.style.display = isExpanded ? 'flex' : 'none'
+          if (isExpanded && hiddenLines > 0) {
+            tipElement.textContent = `展开显示剩余 ${hiddenLines} 行代码 ...`
+          }
         }
         
         // 更新代码块高度
-        const pre = block.closest('pre') as HTMLElement
         if (pre) {
           pre.style.height = 'auto'
           
@@ -421,6 +458,14 @@ const initCodeBlocks = () => {
               const totalHeight = mainHeight + hiddenHeight
               pre.style.height = `${totalHeight}px`
               pre.style.minHeight = `${totalHeight}px`
+              
+              console.log('展开/收起操作后状态:', {
+                新高度: totalHeight,
+                主代码高度: mainHeight,
+                隐藏代码高度: hiddenHeight,
+                主要行号: mainCode.getAttribute('data-line-numbers'),
+                隐藏行号: hiddenCodeElement.getAttribute('data-line-numbers')
+              })
             }
           })
         }
@@ -849,6 +894,153 @@ html, body {
   height: auto !important;
 }
 
+.markdown-content pre .code-content-wrapper {
+  overflow-x: auto;
+  overflow-y: hidden;
+  width: 100%;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+.markdown-content pre code {
+  padding: 0;
+  margin: 0;
+  font-size: 100%;
+  word-break: normal;
+  white-space: pre;
+  background: transparent;
+  border: 0;
+  display: block;
+  position: relative;
+  line-height: 1.45;
+  font-family: "SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  padding-left: 32px;
+  padding-right: 8px;
+  z-index: 1;
+  flex-shrink: 0;
+  background-color: transparent;
+  min-width: fit-content;
+}
+
+.markdown-content pre code::before {
+  content: attr(data-line-numbers);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 30px;
+  height: 100%;
+  padding: 0 6px 0 2px;
+  color: #999;
+  font-size: 100%;
+  line-height: 1.45;
+  text-align: right;
+  white-space: pre !important;
+  overflow: hidden;
+  user-select: none;
+  pointer-events: none;
+  font-family: "SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  box-sizing: border-box;
+  background-color: #f0f0f0;
+  border-right: 1px solid #eee;
+  display: block;
+}
+
+/* 隐藏代码样式 */
+.markdown-content pre .hidden-code {
+  margin: 0;
+  padding: 0;
+  border-top: none;
+  display: none;
+  flex-shrink: 0;
+  min-height: 0;
+  position: relative;
+  background-color: #f3f4f6;
+  line-height: 0;
+  width: 100%;
+}
+
+.markdown-content pre .hidden-code code {
+  margin: 0;
+  padding: 0 8px 0 32px;
+  border: none;
+  flex-shrink: 0;
+  background-color: transparent;
+  position: relative;
+  line-height: 1.45;
+  display: block;
+  white-space: pre;
+  font-family: "SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  min-width: fit-content;
+}
+
+.markdown-content pre .hidden-code code::before {
+  content: attr(data-line-numbers);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 30px;
+  height: 100%;
+  padding: 0 6px 0 2px;
+  color: #999;
+  font-size: 100%;
+  line-height: 1.45;
+  text-align: right;
+  white-space: pre !important;
+  overflow: hidden;
+  user-select: none;
+  pointer-events: none;
+  font-family: "SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  box-sizing: border-box;
+  background-color: #f0f0f0;
+  border-right: 1px solid #eee;
+  display: block;
+}
+
+/* 确保换行模式下行号正确显示 */
+.markdown-content pre code[style*="white-space: pre-wrap"]::before,
+.markdown-content pre .hidden-code code[style*="white-space: pre-wrap"]::before {
+  white-space: pre !important;
+}
+
+/* 修改代码块容器样式 */
+.code-block {
+  width: 100% !important;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+}
+
+/* 自定义横向滚动条样式 */
+.markdown-content pre .code-content-wrapper::-webkit-scrollbar {
+  height: 6px;
+  background-color: transparent;
+}
+
+.markdown-content pre .code-content-wrapper::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.markdown-content pre .code-content-wrapper::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+/* 只在鼠标悬浮时显示横向滚动条 */
+.markdown-content pre:hover .code-content-wrapper::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+.markdown-content pre:not(:hover) .code-content-wrapper::-webkit-scrollbar-thumb {
+  background-color: transparent;
+}
+
 .markdown-content pre .lang-tag {
   position: absolute;
   top: 0;
@@ -869,88 +1061,6 @@ html, body {
 .markdown-content pre:hover .lang-tag {
   opacity: 0;
   pointer-events: none;
-}
-
-.markdown-content pre code {
-  padding: 0;
-  margin: 0;
-  font-size: 100%;
-  word-break: normal;
-  white-space: pre;
-  background: transparent;
-  border: 0;
-  display: block;
-  position: relative;
-  overflow-x: auto;
-  overflow-y: hidden;
-  line-height: 1.45;
-  font-family: "SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
-  padding-left: 32px;
-  padding-right: 8px;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
-  z-index: 1;
-  flex-shrink: 0;
-  background-color: transparent;
-}
-
-/* 自定义横向滚动条样式 */
-.markdown-content pre code::-webkit-scrollbar {
-  height: 6px;
-  background-color: transparent;
-  display: block;
-}
-
-.markdown-content pre code::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.2);
-  border-radius: 3px;
-}
-
-.markdown-content pre code::-webkit-scrollbar-track {
-  background-color: transparent;
-}
-
-/* 只在鼠标悬浮时显示横向滚动条 */
-.markdown-content pre:hover code::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.3);
-}
-
-.markdown-content pre:not(:hover) code::-webkit-scrollbar-thumb {
-  background-color: transparent;
-}
-
-/* 修改代码语言标签的实现方式 */
-.markdown-content pre {
-  counter-reset: line-number;
-}
-
-.markdown-content pre::before {
-  display: none;
-}
-
-/* 行号样式 */
-.markdown-content pre code::before {
-  content: attr(data-line-numbers);
-  position: absolute;
-  left: 0;
-  top: 0;
-  height: 100%;
-  padding: 0 6px 0 2px;
-  color: #999;
-  font-size: 100%;
-  line-height: 1.45;
-  text-align: right;
-  user-select: none;
-  pointer-events: none;
-  font-family: "SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
-  width: 30px;
-  box-sizing: border-box;
-  background-color: #f0f0f0;
-  border-right: 1px solid #eee;
-  border-top-left-radius: 3px;
-  border-bottom-left-radius: 3px;
-  white-space: pre;
-  overflow: hidden;
 }
 
 /* 复制、换行和展开按钮样式 */
@@ -1003,70 +1113,6 @@ html, body {
 .markdown-content pre:hover .wrap-button,
 .markdown-content pre:hover .expand-button {
   opacity: 1;
-}
-
-/* 修改代码块容器样式 */
-.code-block {
-  width: 100% !important;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  margin: 0;
-  padding: 0;
-  height: auto !important;
-}
-
-/* 隐藏代码样式 */
-.markdown-content pre .hidden-code {
-  margin: 0;
-  padding: 0;
-  border-top: none;
-  display: none;
-  flex-shrink: 0;
-  min-height: 0;
-  position: relative;
-  background-color: #f3f4f6;
-  line-height: 0;
-  width: 100%;
-  height: auto;
-}
-
-.markdown-content pre .hidden-code code {
-  margin: 0;
-  padding: 0 8px 0 32px;
-  border: none;
-  flex-shrink: 0;
-  background-color: transparent;
-  position: relative;
-  line-height: 1.45;
-  display: block;
-  width: 100%;
-  white-space: pre;
-  font-family: "SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
-  height: auto;
-}
-
-.markdown-content pre .hidden-code code::before {
-  content: attr(data-line-numbers);
-  position: absolute;
-  left: 0;
-  top: 0;
-  height: 100%;
-  width: 30px;
-  padding: 0 6px 0 2px;
-  color: #999;
-  font-size: 100%;
-  line-height: 1.45;
-  text-align: right;
-  user-select: none;
-  pointer-events: none;
-  font-family: "SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
-  box-sizing: border-box;
-  background-color: #f0f0f0;
-  border-right: 1px solid #eee;
-  white-space: pre;
-  overflow: hidden;
 }
 
 /* 展开提示样式 */
