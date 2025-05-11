@@ -264,7 +264,13 @@ const initCodeBlocks = () => {
       wrapButton.addEventListener('click', () => {
         const code = block.querySelector('code')
         if (code) {
-          code.style.whiteSpace = code.style.whiteSpace === 'pre-wrap' ? 'pre' : 'pre-wrap'
+          const isWrapped = code.style.whiteSpace === 'pre-wrap'
+          code.style.whiteSpace = isWrapped ? 'pre' : 'pre-wrap'
+          
+          // 更新行号
+          const lines = code.textContent?.split('\n') || []
+          const lineNumbers = lines.length === 1 && lines[0].trim() === '' ? '1' : lines.map((_, i) => i + 1).join('\n')
+          code.setAttribute('data-line-numbers', lineNumbers)
         }
       })
     }
@@ -687,33 +693,39 @@ html, body {
   border: 0;
   display: block;
   position: relative;
-  overflow: hidden;
+  overflow-x: auto; /* 允许横向滚动 */
   line-height: 1.45;
   font-family: "SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
   padding-left: 32px;
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent; /* Firefox */
 }
 
-/* 代码语言标签 */
-.markdown-content pre::before {
-  content: attr(data-lang);
-  position: absolute;
-  top: 0;
-  right: 0;
-  padding: 2px 8px;
-  font-size: 12px;
-  color: #666;
-  background-color: #e8eaed;
-  border-bottom-left-radius: 3px;
-  opacity: 1;
-  transition: opacity 0.3s;
-  z-index: 2;
+/* 自定义横向滚动条样式 */
+.markdown-content pre code::-webkit-scrollbar {
+  height: 6px;
+  background-color: transparent;
 }
 
-.markdown-content pre:hover::before {
-  opacity: 0;
+.markdown-content pre code::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
 }
 
-/* 行号 */
+.markdown-content pre code::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+/* 只在鼠标悬浮时显示横向滚动条 */
+.markdown-content pre:hover code::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.markdown-content pre:not(:hover) code::-webkit-scrollbar-thumb {
+  background-color: transparent;
+}
+
+/* 行号样式 */
 .markdown-content pre code::before {
   content: attr(data-line-numbers);
   position: absolute;
@@ -734,8 +746,28 @@ html, body {
   border-right: 1px solid #eee;
   border-top-left-radius: 3px;
   border-bottom-left-radius: 3px;
-  border-top-right-radius: 3px;
-  border-bottom-right-radius: 3px;
+  white-space: pre; /* 确保行号正确换行 */
+  overflow: hidden; /* 防止行号溢出 */
+}
+
+/* 代码语言标签 */
+.markdown-content pre::before {
+  content: attr(data-lang);
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 2px 8px;
+  font-size: 12px;
+  color: #666;
+  background-color: #e8eaed;
+  border-bottom-left-radius: 3px;
+  opacity: 1;
+  transition: opacity 0.3s;
+  z-index: 2;
+}
+
+.markdown-content pre:hover::before {
+  opacity: 0;
 }
 
 /* 复制按钮 */
