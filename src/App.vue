@@ -84,18 +84,30 @@ const md = new MarkdownIt({
       return `<pre class="mermaid" id="${id}">${str}</pre>`
     }
     
+    // 处理 URL 类型
+    if (lang === 'url') {
+      const lines = str.split('\n')
+      const lineNumbers = lines.length === 1 && lines[0].trim() === '' ? '1' : lines.map((_, i) => i + 1).join('\n')
+      return `<pre class="code-block" data-lang="url"><code data-line-numbers="${lineNumbers}">${str}</code><button class="copy-button" title="复制代码"><img src="/online-typora/copy.svg" alt="copy" style="width: 14px; height: 14px;" /></button><button class="wrap-button" title="切换换行"><img src="/online-typora/return.svg" alt="wrap" style="width: 14px; height: 14px;" /></button></pre>`
+    }
+    
+    // 处理其他语言
     if (lang && hljs.getLanguage(lang)) {
       try {
         const highlighted = hljs.highlight(str, { language: lang }).value
         const lines = str.split('\n')
         const lineNumbers = lines.length === 1 && lines[0].trim() === '' ? '1' : lines.map((_, i) => i + 1).join('\n')
         
-        return `<pre class="code-block" data-lang="${lang}"><code data-line-numbers="${lineNumbers}">${highlighted || ' '}</code><button class="copy-button" title="复制代码"><svg width="14" height="14" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M14 12V2H4V0h12v12h-2zM0 4h12v12H0V4zm2 2v8h8V6H2z" fill-rule="evenodd"/></svg></button><button class="wrap-button" title="切换换行"><svg width="14" height="14" viewBox="0 0 1200 1200" xmlns="http://www.w3.org/2000/svg"><path d="M808.969,133.929v257.06H942.94v267.899H417.981V508.763L0,787.417l417.982,278.654V915.946h524.959H1200V658.888V390.988v-257.06H942.941H808.969L808.969,133.929z"/></svg></button></pre>`
+        return `<pre class="code-block" data-lang="${lang}"><code data-line-numbers="${lineNumbers}">${highlighted || ' '}</code><button class="copy-button" title="复制代码"><img src="/online-typora/copy.svg" alt="copy" style="width: 14px; height: 14px;" /></button><button class="wrap-button" title="切换换行"><img src="/online-typora/return.svg" alt="wrap" style="width: 14px; height: 14px;" /></button></pre>`
       } catch (err) {
         console.error('代码高亮失败:', err)
       }
     }
-    return '' // 使用默认的转义
+    
+    // 对于不支持的语言，仍然显示代码块，但不进行高亮
+    const lines = str.split('\n')
+    const lineNumbers = lines.length === 1 && lines[0].trim() === '' ? '1' : lines.map((_, i) => i + 1).join('\n')
+    return `<pre class="code-block" data-lang="${lang || 'text'}"><code data-line-numbers="${lineNumbers}">${str}</code><button class="copy-button" title="复制代码"><img src="/online-typora/copy.svg" alt="copy" style="width: 14px; height: 14px;" /></button><button class="wrap-button" title="切换换行"><img src="/online-typora/return.svg" alt="wrap" style="width: 14px; height: 14px;" /></button></pre>`
   }
 })
 
