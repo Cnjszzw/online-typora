@@ -402,13 +402,13 @@ const loadFileList = async () => {
     }
     const files = await response.json()
     // 设置第一级默认展开
-    files.forEach(file => {
+    files.forEach((file: FileNode) => {
       file.isExpanded = true
       if (file.children) {
-        file.children.forEach(child => {
+        file.children.forEach((child: FileNode) => {
           child.isExpanded = false
           if (child.children) {
-            child.children.forEach(grandChild => {
+            child.children.forEach((grandChild: FileNode) => {
               grandChild.isExpanded = false
             })
           }
