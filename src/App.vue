@@ -267,6 +267,26 @@ const initCodeBlocks = () => {
           const isWrapped = code.style.whiteSpace === 'pre-wrap'
           code.style.whiteSpace = isWrapped ? 'pre' : 'pre-wrap'
           
+          // 同时调整容器宽度和样式
+          const pre = code.closest('pre')
+          if (pre) {
+            if (!isWrapped) {
+              // 换行模式
+              pre.style.width = '100%'
+              pre.style.maxWidth = '100%'
+              code.style.width = '100%'
+              code.style.maxWidth = '100%'
+              code.style.wordBreak = 'break-all'
+            } else {
+              // 不换行模式
+              pre.style.width = 'fit-content'
+              pre.style.maxWidth = '100%'
+              code.style.width = 'max-content'
+              code.style.maxWidth = 'none'
+              code.style.wordBreak = 'normal'
+            }
+          }
+          
           // 等待DOM更新完成后再计算行数
           setTimeout(() => {
             // 获取原始文本内容
@@ -283,6 +303,9 @@ const initCodeBlocks = () => {
             const codeHeight = code.clientHeight
             console.log('代码块行高:', lineHeight)
             console.log('代码块实际高度:', codeHeight)
+            console.log('当前是否换行模式:', !isWrapped)
+            console.log('代码块当前宽度:', code.offsetWidth)
+            console.log('容器当前宽度:', pre?.offsetWidth)
             
             // 计算实际行数（包括换行）
             const actualLines = Math.ceil(codeHeight / lineHeight)
@@ -300,14 +323,13 @@ const initCodeBlocks = () => {
             console.log('更新后行号:', updatedLineNumbers)
             
             // 确保代码块高度适应内容
-            const pre = code.closest('pre')
             if (pre) {
               pre.style.height = 'auto'
               console.log('代码块高度:', pre.offsetHeight)
               console.log('代码块内容高度:', code.offsetHeight)
               console.log('代码块滚动高度:', code.scrollHeight)
             }
-          }, 0)
+          }, 100) // 增加延时以确保样式已应用
         }
       })
     }
