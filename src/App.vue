@@ -710,6 +710,7 @@ html, body {
 .markdown-content pre {
   position: relative;
   padding: 8px 4px;
+  padding-right: 84px;
   font-size: 85%;
   line-height: 1.45;
   background-color: #f6f8fa;
