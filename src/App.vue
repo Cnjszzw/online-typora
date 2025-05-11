@@ -267,10 +267,47 @@ const initCodeBlocks = () => {
           const isWrapped = code.style.whiteSpace === 'pre-wrap'
           code.style.whiteSpace = isWrapped ? 'pre' : 'pre-wrap'
           
-          // 更新行号
-          const lines = code.textContent?.split('\n') || []
-          const lineNumbers = lines.length === 1 && lines[0].trim() === '' ? '1' : lines.map((_, i) => i + 1).join('\n')
-          code.setAttribute('data-line-numbers', lineNumbers)
+          // 等待DOM更新完成后再计算行数
+          setTimeout(() => {
+            // 获取原始文本内容
+            const originalText = code.textContent || ''
+            console.log('原始文本内容:', originalText)
+            
+            // 获取当前显示的文本内容
+            const displayedText = code.innerText || ''
+            console.log('当前显示文本:', displayedText)
+            
+            // 获取代码块的实际高度和行高
+            const computedStyle = window.getComputedStyle(code)
+            const lineHeight = parseFloat(computedStyle.lineHeight)
+            const codeHeight = code.clientHeight
+            console.log('代码块行高:', lineHeight)
+            console.log('代码块实际高度:', codeHeight)
+            
+            // 计算实际行数（包括换行）
+            const actualLines = Math.ceil(codeHeight / lineHeight)
+            console.log('计算得到的实际行数:', actualLines)
+            
+            // 生成新的行号
+            const lineNumbers = Array.from({ length: actualLines }, (_, i) => i + 1).join('\n')
+            console.log('新行号:', lineNumbers)
+            
+            // 更新行号属性
+            code.setAttribute('data-line-numbers', lineNumbers)
+            
+            // 验证行号更新
+            const updatedLineNumbers = code.getAttribute('data-line-numbers')
+            console.log('更新后行号:', updatedLineNumbers)
+            
+            // 确保代码块高度适应内容
+            const pre = code.closest('pre')
+            if (pre) {
+              pre.style.height = 'auto'
+              console.log('代码块高度:', pre.offsetHeight)
+              console.log('代码块内容高度:', code.offsetHeight)
+              console.log('代码块滚动高度:', code.scrollHeight)
+            }
+          }, 0)
         }
       })
     }
@@ -694,11 +731,12 @@ html, body {
   display: block;
   position: relative;
   overflow-x: auto; /* 允许横向滚动 */
+  overflow-y: visible; /* 确保垂直方向完全显示 */
   line-height: 1.45;
   font-family: "SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
   padding-left: 32px;
-  scrollbar-width: thin; /* Firefox */
-  scrollbar-color: rgba(0, 0, 0, 0.2) transparent; /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
 }
 
 /* 自定义横向滚动条样式 */
@@ -746,8 +784,8 @@ html, body {
   border-right: 1px solid #eee;
   border-top-left-radius: 3px;
   border-bottom-left-radius: 3px;
-  white-space: pre; /* 确保行号正确换行 */
-  overflow: hidden; /* 防止行号溢出 */
+  white-space: pre;
+  overflow: hidden;
 }
 
 /* 代码语言标签 */
