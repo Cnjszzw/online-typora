@@ -197,6 +197,7 @@ const saveScrollPosition = (filePath: string, position: number) => {
   localStorage.setItem('documentScrollPositions', JSON.stringify(positions))
 }
 
+// @ts-ignore - Used in template
 const toggleFolder = (file: FileNode) => {
   if (file.children) {
     file.isExpanded = !file.isExpanded

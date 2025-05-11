@@ -27,7 +27,7 @@ interface FileNode {
   isExpanded?: boolean
 }
 
-const props = defineProps<{
+const { file, selectedFile, isTopLevel } = defineProps<{
   file: FileNode
   selectedFile: string
   isTopLevel?: boolean
