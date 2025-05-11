@@ -300,6 +300,13 @@ watch(markdownContent, async () => {
   }
 })
 
+// 添加一个计算实际显示行数的辅助函数
+const calculateVisibleLines = (element: HTMLElement): number => {
+  const rect = element.getBoundingClientRect()
+  const lineHeight = parseFloat(getComputedStyle(element).lineHeight)
+  return Math.ceil(rect.height / lineHeight)
+}
+
 // 初始化代码块功能
 const initCodeBlocks = () => {
   const codeBlocks = document.querySelectorAll('.code-block')
@@ -348,60 +355,84 @@ const initCodeBlocks = () => {
         const code = block.querySelector('code') as HTMLElement
         const hiddenCode = block.querySelector('.hidden-code code') as HTMLElement | null
         
-        const totalLines = parseInt(pre.getAttribute('data-total-lines') || '0')
-        const displayLines = parseInt(pre.getAttribute('data-display-lines') || '0')
-        const hiddenLines = parseInt(pre.getAttribute('data-hidden-lines') || '0')
+        const isWrapped = code.style.whiteSpace === 'pre-wrap'
         
-        console.log('换行操作前状态:', {
-          总行数: totalLines,
-          显示行数: displayLines,
-          隐藏行数: hiddenLines,
-          当前行号: code.getAttribute('data-line-numbers'),
-          隐藏代码行号: hiddenCode?.getAttribute('data-line-numbers')
-        })
+        // 设置换行模式
+        code.style.whiteSpace = isWrapped ? 'pre' : 'pre-wrap'
+        if (hiddenCode) {
+          hiddenCode.style.whiteSpace = isWrapped ? 'pre' : 'pre-wrap'
+        }
         
-        if (code) {
-          const isWrapped = code.style.whiteSpace === 'pre-wrap'
-          code.style.whiteSpace = isWrapped ? 'pre' : 'pre-wrap'
+        if (!isWrapped) {
+          // 换行模式
+          code.style.wordBreak = 'break-all'
           if (hiddenCode) {
-            hiddenCode.style.whiteSpace = isWrapped ? 'pre' : 'pre-wrap'
+            hiddenCode.style.wordBreak = 'break-all'
+          }
+        } else {
+          // 不换行模式
+          code.style.wordBreak = 'normal'
+          if (hiddenCode) {
+            hiddenCode.style.wordBreak = 'normal'
+          }
+        }
+        
+        // 等待DOM更新完成后重新计算行号
+        requestAnimationFrame(() => {
+          // 强制重新计算布局
+          const codeWrapper = block.querySelector('.code-content-wrapper') as HTMLElement
+          if (codeWrapper) {
+            codeWrapper.style.minWidth = 'auto'
+            void codeWrapper.offsetWidth
+            codeWrapper.style.minWidth = 'fit-content'
           }
           
-          if (!isWrapped) {
-            // 换行模式
-            code.style.wordBreak = 'break-all'
-            if (hiddenCode) {
-              hiddenCode.style.wordBreak = 'break-all'
-            }
-          } else {
-            // 不换行模式
-            code.style.wordBreak = 'normal'
-            if (hiddenCode) {
-              hiddenCode.style.wordBreak = 'normal'
-            }
-          }
+          // 计算实际显示的行数
+          const mainVisibleLines = calculateVisibleLines(code)
+          const hiddenVisibleLines = hiddenCode ? calculateVisibleLines(hiddenCode) : 0
           
-          // 确保行号正确显示
-          const mainLineNumbers = Array.from({ length: displayLines }, (_, i) => i + 1).join('\n')
-          const hiddenLineNumbers = Array.from({ length: hiddenLines }, (_, i) => i + displayLines + 1).join('\n')
+          console.log('换行后实际显示行数:', {
+            主代码实际显示行数: mainVisibleLines,
+            隐藏代码实际显示行数: hiddenVisibleLines,
+            换行模式: !isWrapped
+          })
           
+          // 重新生成行号
+          const mainLineNumbers = Array.from(
+            { length: mainVisibleLines }, 
+            (_, i) => i + 1
+          ).join('\n')
+          
+          const hiddenLineNumbers = hiddenVisibleLines > 0 ? Array.from(
+            { length: hiddenVisibleLines }, 
+            (_, i) => i + mainVisibleLines + 1
+          ).join('\n') : ''
+          
+          // 更新行号
           code.setAttribute('data-line-numbers', mainLineNumbers)
-          if (hiddenCode) {
+          if (hiddenCode && hiddenVisibleLines > 0) {
             hiddenCode.setAttribute('data-line-numbers', hiddenLineNumbers)
           }
           
-          console.log('换行操作后状态:', {
-            换行模式: !isWrapped,
-            主要行号: mainLineNumbers,
-            隐藏行号: hiddenLineNumbers
-          })
-          
           // 更新展开提示的行数
           const tipElement = block.querySelector('.code-expand-tip') as HTMLElement
-          if (tipElement && hiddenLines > 0) {
-            tipElement.textContent = `展开显示剩余 ${hiddenLines} 行代码 ...`
+          if (tipElement && hiddenVisibleLines > 0) {
+            tipElement.textContent = `展开显示剩余 ${hiddenVisibleLines} 行代码 ...`
           }
-        }
+          
+          // 更新数据属性
+          pre.setAttribute('data-total-lines', String(mainVisibleLines + hiddenVisibleLines))
+          pre.setAttribute('data-display-lines', String(mainVisibleLines))
+          pre.setAttribute('data-hidden-lines', String(hiddenVisibleLines))
+          
+          console.log('换行操作完成:', {
+            主代码显示行数: mainVisibleLines,
+            隐藏代码显示行数: hiddenVisibleLines,
+            主代码行号: mainLineNumbers,
+            隐藏代码行号: hiddenLineNumbers,
+            换行模式: !isWrapped
+          })
+        })
       })
     }
 
@@ -412,63 +443,62 @@ const initCodeBlocks = () => {
     const toggleExpand = () => {
       const pre = block.closest('pre') as HTMLElement
       const hiddenCode = block.querySelector('.hidden-code') as HTMLElement
+      const mainCode = block.querySelector('code') as HTMLElement
+      const hiddenCodeElement = hiddenCode?.querySelector('code') as HTMLElement
       const isExpanded = hiddenCode?.style.display !== 'none'
       
-      const totalLines = parseInt(pre.getAttribute('data-total-lines') || '0')
-      const displayLines = parseInt(pre.getAttribute('data-display-lines') || '0')
-      const hiddenLines = parseInt(pre.getAttribute('data-hidden-lines') || '0')
-      
-      console.log('展开/收起操作前状态:', {
-        总行数: totalLines,
-        显示行数: displayLines,
-        隐藏行数: hiddenLines,
-        当前是否展开: !isExpanded
-      })
-      
-      if (hiddenCode) {
+      if (hiddenCode && hiddenCodeElement) {
         hiddenCode.style.display = isExpanded ? 'none' : 'block'
         
-        const img = expandButton?.querySelector('img') as HTMLElement
-        if (img) {
-          img.style.transform = isExpanded ? 'rotate(0deg)' : 'rotate(180deg)'
-        }
-        
-        const tipElement = expandTip as HTMLElement
-        if (tipElement) {
-          tipElement.style.display = isExpanded ? 'flex' : 'none'
-          if (isExpanded && hiddenLines > 0) {
-            tipElement.textContent = `展开显示剩余 ${hiddenLines} 行代码 ...`
-          }
-        }
-        
-        // 更新代码块高度
-        if (pre) {
-          pre.style.height = 'auto'
+        // 等待DOM更新完成后重新计算行号
+        requestAnimationFrame(() => {
+          // 计算实际显示的行数
+          const mainVisibleLines = calculateVisibleLines(mainCode)
+          const hiddenVisibleLines = isExpanded ? 0 : calculateVisibleLines(hiddenCodeElement)
           
-          // 强制重新计算布局
-          void pre.offsetHeight
-          
-          // 设置新的高度
-          requestAnimationFrame(() => {
-            const mainCode = block.querySelector('code') as HTMLElement
-            const hiddenCodeElement = block.querySelector('.hidden-code code') as HTMLElement
-            if (mainCode && hiddenCodeElement) {
-              const mainHeight = mainCode.getBoundingClientRect().height
-              const hiddenHeight = isExpanded ? 0 : hiddenCodeElement.getBoundingClientRect().height
-              const totalHeight = mainHeight + hiddenHeight
-              pre.style.height = `${totalHeight}px`
-              pre.style.minHeight = `${totalHeight}px`
-              
-              console.log('展开/收起操作后状态:', {
-                新高度: totalHeight,
-                主代码高度: mainHeight,
-                隐藏代码高度: hiddenHeight,
-                主要行号: mainCode.getAttribute('data-line-numbers'),
-                隐藏行号: hiddenCodeElement.getAttribute('data-line-numbers')
-              })
-            }
+          console.log('展开/收起后实际显示行数:', {
+            主代码显示行数: mainVisibleLines,
+            隐藏代码显示行数: hiddenVisibleLines,
+            是否展开: !isExpanded
           })
-        }
+          
+          // 重新生成行号
+          const mainLineNumbers = Array.from(
+            { length: mainVisibleLines }, 
+            (_, i) => i + 1
+          ).join('\n')
+          
+          const hiddenLineNumbers = hiddenVisibleLines > 0 ? Array.from(
+            { length: hiddenVisibleLines }, 
+            (_, i) => i + mainVisibleLines + 1
+          ).join('\n') : ''
+          
+          // 更新行号
+          mainCode.setAttribute('data-line-numbers', mainLineNumbers)
+          if (hiddenVisibleLines > 0) {
+            hiddenCodeElement.setAttribute('data-line-numbers', hiddenLineNumbers)
+          }
+          
+          // 更新展开提示
+          const tipElement = block.querySelector('.code-expand-tip') as HTMLElement
+          if (tipElement) {
+            tipElement.style.display = isExpanded ? 'flex' : 'none'
+            if (isExpanded && hiddenVisibleLines > 0) {
+              tipElement.textContent = `展开显示剩余 ${hiddenVisibleLines} 行代码 ...`
+            }
+          }
+          
+          // 更新按钮状态
+          const img = expandButton?.querySelector('img') as HTMLElement
+          if (img) {
+            img.style.transform = isExpanded ? 'rotate(0deg)' : 'rotate(180deg)'
+          }
+          
+          // 更新数据属性
+          pre.setAttribute('data-total-lines', String(mainVisibleLines + hiddenVisibleLines))
+          pre.setAttribute('data-display-lines', String(mainVisibleLines))
+          pre.setAttribute('data-hidden-lines', String(hiddenVisibleLines))
+        })
       }
     }
 
@@ -938,7 +968,7 @@ html, body {
   line-height: 1.45;
   text-align: right;
   white-space: pre !important;
-  overflow: hidden;
+  overflow: visible;
   user-select: none;
   pointer-events: none;
   font-family: "SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
@@ -989,7 +1019,7 @@ html, body {
   line-height: 1.45;
   text-align: right;
   white-space: pre !important;
-  overflow: hidden;
+  overflow: visible;
   user-select: none;
   pointer-events: none;
   font-family: "SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
@@ -1003,6 +1033,8 @@ html, body {
 .markdown-content pre code[style*="white-space: pre-wrap"]::before,
 .markdown-content pre .hidden-code code[style*="white-space: pre-wrap"]::before {
   white-space: pre !important;
+  height: auto;
+  min-height: 100%;
 }
 
 /* 修改代码块容器样式 */

@@ -40,63 +40,45 @@ function hello() {
 ```python
 def greet(name):
     print(f"Hello, {name}!")
-    return True
-    def greet(name):
-    print(f"Hello, {name}!")
-    return True
-    def greet(name):
-    print(f"Hello, {name}!")
-    return True
-    def greet(name):
-    print(f"Hello, {name}!")
-    return True
-    def greet(name):
-    print(f"Hello, {name}!")
-    return True
-    def greet(name):
-    print(f"Hello, {name}!")
-    return True
-    def greet(name):
-    print(f"Hello, {name}!")
-    return True
-    def greet(name):
-    print(f"Hello, {name}!")
-    return Truedef greet(name):
-    print(f"Hello, {name}!")
-    return Truedef greet(name):
-    print(f"Hello, {name}!")
-    return True
-        def greet(name):
-    print(f"Hello, {name}!")
-    return True
-    def greet(name):
-    print(f"Hello, {name}!")
-    return True
-    def greet(name):
-    print(f"Hello, {name}!")
-    return True
-    def greet(name):
-    print(f"Hello, {name}!")
-    return True
-    def greet(name):
-    print(f"Hello, {name}!")
-    return True
-    def greet(name):
-    print(f"Hello, {name}!")
-    return Truedef greet(name):
-    print(f"Hello, {name}!")
-    return Truedef greet(name):
-    print(f"Hello, {name}!")
-    return True
-    
-    
-    def greet(name):
-    print(f"Hello, {name}!")
-    return True
-    
-    
-    
-    
+    print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")
+    print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")
+    print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")
+    print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")
+    print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")
+    print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")
+    print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")
+    print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")
+    print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")
+    print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")
+    print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")
+    print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")
+    print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")
+    print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")
+    print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")
+    print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")
+    print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")
+    print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")
+    print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")
+    print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")
+    print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")
+    print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")
+    print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")
+    print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")
+    print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")
+    print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")
+    print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")
+    print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")
+    print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")
+    print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")
+    print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")
+    print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")
+    print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")
+    print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")
+    print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")
+    print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")
+    print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")
+    print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")
+    print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")print(f"Hello, {name}!")
 ```
 
 ## 4. 表格
