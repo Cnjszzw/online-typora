@@ -460,15 +460,6 @@ defineExpose({
 
 <template>
   <div class="app-container">
-    <div class="navbar">
-      <div class="navbar-brand">INFO.CENTER</div>
-      <div class="navbar-menu">
-        <a-button type="text" class="nav-btn">文件</a-button>
-        <a-button type="text" class="nav-btn">编辑</a-button>
-        <a-button type="text" class="nav-btn">视图</a-button>
-        <a-button type="text" class="nav-btn">帮助</a-button>
-      </div>
-    </div>
     <div class="main-layout">
       <div class="sidebar-container" :style="{ width: sidebarWidth + 'px' }">
         <Sidebar 
@@ -538,43 +529,13 @@ html, body {
   bottom: 0;
 }
 
-.navbar {
-  height: 48px;
-  background-color: #fff;
-  border-bottom: 1px solid #e0e0e0;
-  display: flex;
-  align-items: center;
-  padding: 0 16px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-  flex-shrink: 0;
-  width: 100%;
-}
-
-.navbar-brand {
-  font-size: 18px;
-  font-weight: 600;
-  color: #1890ff;
-  margin-right: 32px;
-}
-
-.nav-btn {
-  height: 48px;
-  padding: 0 12px;
-  font-size: 16px;
-}
-
-.navbar-menu {
-  display: flex;
-  gap: 8px;
-}
-
 .main-layout {
   display: flex;
   flex: 1;
   overflow: hidden;
   position: relative;
   width: 100%;
-  height: calc(100% - 48px);
+  height: 100%;
 }
 
 .sidebar-container {
