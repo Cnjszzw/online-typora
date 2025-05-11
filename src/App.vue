@@ -294,67 +294,37 @@ const initCodeBlocks = () => {
           const isWrapped = code.style.whiteSpace === 'pre-wrap'
           code.style.whiteSpace = isWrapped ? 'pre' : 'pre-wrap'
           
-          // 同时调整容器宽度和样式
+          // 同时调整容器样式
           const pre = code.closest('pre')
           if (pre) {
             if (!isWrapped) {
               // 换行模式
-              pre.style.width = '100%'
-              pre.style.maxWidth = '100%'
-              code.style.width = '100%'
-              code.style.maxWidth = '100%'
               code.style.wordBreak = 'break-all'
             } else {
               // 不换行模式
-              pre.style.width = 'fit-content'
-              pre.style.maxWidth = '100%'
-              code.style.width = 'max-content'
-              code.style.maxWidth = 'none'
               code.style.wordBreak = 'normal'
             }
           }
           
           // 等待DOM更新完成后再计算行数
           setTimeout(() => {
-            // 获取原始文本内容
-            const originalText = code.textContent || ''
-            console.log('原始文本内容:', originalText)
-            
-            // 获取当前显示的文本内容
-            const displayedText = code.innerText || ''
-            console.log('当前显示文本:', displayedText)
-            
             // 获取代码块的实际高度和行高
             const computedStyle = window.getComputedStyle(code)
             const lineHeight = parseFloat(computedStyle.lineHeight)
             const codeHeight = code.clientHeight
-            console.log('代码块行高:', lineHeight)
-            console.log('代码块实际高度:', codeHeight)
-            console.log('当前是否换行模式:', !isWrapped)
-            console.log('代码块当前宽度:', code.offsetWidth)
-            console.log('容器当前宽度:', pre?.offsetWidth)
             
             // 计算实际行数（包括换行）
             const actualLines = Math.ceil(codeHeight / lineHeight)
-            console.log('计算得到的实际行数:', actualLines)
             
             // 生成新的行号
             const lineNumbers = Array.from({ length: actualLines }, (_, i) => i + 1).join('\n')
-            console.log('新行号:', lineNumbers)
             
             // 更新行号属性
             code.setAttribute('data-line-numbers', lineNumbers)
             
-            // 验证行号更新
-            const updatedLineNumbers = code.getAttribute('data-line-numbers')
-            console.log('更新后行号:', updatedLineNumbers)
-            
             // 确保代码块高度适应内容
             if (pre) {
               pre.style.height = 'auto'
-              console.log('代码块高度:', pre.offsetHeight)
-              console.log('代码块内容高度:', code.offsetHeight)
-              console.log('代码块滚动高度:', code.scrollHeight)
             }
           }, 100) // 增加延时以确保样式已应用
         }
@@ -768,9 +738,7 @@ html, body {
   overflow: visible;
   display: flex;
   flex-direction: column;
-  width: fit-content;
-  min-width: 300px;
-  max-width: 100%;
+  width: 100%;
   border: 1px solid #e5e7eb;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
@@ -1018,9 +986,7 @@ html, body {
 
 /* 修改代码块容器样式 */
 .code-block {
-  width: fit-content !important;
-  min-width: 300px;
-  max-width: 100%;
+  width: 100% !important;
   position: relative;
   display: flex;
   flex-direction: column;
