@@ -727,9 +727,46 @@ onUnmounted(() => {
 
 .outline {
   flex: 1;
-  overflow-y: auto;
+  overflow-y: scroll;
   overflow-x: hidden;
   padding: 10px;
+  padding-right: 16px;
+  position: relative;
+}
+
+/* 修改大纲滚动条样式 */
+.outline::-webkit-scrollbar {
+  width: 6px;
+  position: absolute;
+  right: 0;
+  background-color: transparent;
+}
+
+.outline::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.outline::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+/* 确保大纲箭头位置固定 */
+.outline .arrow-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  font-size: 12px;
+  color: #666;
+  cursor: pointer;
+  user-select: none;
+  flex-shrink: 0;
+  position: absolute;
+  right: -16px;
+  transition: transform 0.2s ease;
+  z-index: 1;
 }
 
 .outline-item {
@@ -755,7 +792,7 @@ onUnmounted(() => {
 
 .outline-name {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   width: 100%;
   padding-left: 5px;
@@ -765,10 +802,11 @@ onUnmounted(() => {
   word-break: break-all;
   line-height: 1.4;
   position: relative;
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
+}
+
+/* 添加大纲第一级加粗样式 */
+.outline > .outline-item > .outline-name > .outline-text {
+  font-weight: bold;
 }
 
 .outline-text {
@@ -776,22 +814,6 @@ onUnmounted(() => {
   white-space: normal;
   word-break: break-all;
   margin-right: 8px;
-}
-
-.outline .arrow-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  font-size: 12px;
-  color: #666;
-  cursor: pointer;
-  user-select: none;
-  flex-shrink: 0;
-  position: absolute;
-  right: -16px;
-  transition: transform 0.2s ease;
 }
 
 .outline .children {
