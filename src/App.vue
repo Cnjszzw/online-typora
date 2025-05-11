@@ -735,8 +735,8 @@ html, body {
   padding-right: 84px;
   font-size: 85%;
   line-height: 1.45;
-  background-color: #f6f8fa;
-  border-radius: 3px;
+  background-color: #f3f4f6;
+  border-radius: 6px;
   margin: 4px 0;
   overflow: hidden;
   display: flex;
@@ -744,6 +744,8 @@ html, body {
   width: fit-content;
   min-width: 300px;
   max-width: 100%;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .markdown-content pre code {
@@ -763,14 +765,13 @@ html, body {
   padding-left: 32px;
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
-  width: max-content;
-  min-width: 100%;
 }
 
 /* 自定义横向滚动条样式 */
 .markdown-content pre code::-webkit-scrollbar {
   height: 6px;
   background-color: transparent;
+  display: block;
 }
 
 .markdown-content pre code::-webkit-scrollbar-thumb {
@@ -784,11 +785,31 @@ html, body {
 
 /* 只在鼠标悬浮时显示横向滚动条 */
 .markdown-content pre:hover code::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: rgba(0, 0, 0, 0.3);
 }
 
 .markdown-content pre:not(:hover) code::-webkit-scrollbar-thumb {
   background-color: transparent;
+}
+
+/* 代码语言标签样式调整 */
+.markdown-content pre::before {
+  content: attr(data-lang);
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 2px 8px;
+  font-size: 12px;
+  color: #4b5563;
+  background-color: #e5e7eb;
+  border-bottom-left-radius: 3px;
+  opacity: 1;
+  transition: opacity 0.3s;
+  z-index: 2;
+}
+
+.markdown-content pre:hover::before {
+  opacity: 0;
 }
 
 /* 行号样式 */
@@ -816,64 +837,19 @@ html, body {
   overflow: hidden;
 }
 
-/* 代码语言标签 */
-.markdown-content pre::before {
-  content: attr(data-lang);
-  position: absolute;
-  top: 0;
-  right: 0;
-  padding: 2px 8px;
-  font-size: 12px;
-  color: #666;
-  background-color: #e8eaed;
-  border-bottom-left-radius: 3px;
-  opacity: 1;
-  transition: opacity 0.3s;
-  z-index: 2;
-}
-
-.markdown-content pre:hover::before {
-  opacity: 0;
-}
-
-/* 复制按钮 */
-.markdown-content pre .copy-button {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  background-color: #e8eaed;
-  border: none;
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.3s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  outline: none;
-  z-index: 2;
-  border-radius: 3px;
-}
-
-.markdown-content pre .copy-button:focus {
-  outline: none;
-}
-
-/* 换行按钮 */
+/* 复制和换行按钮样式 */
+.markdown-content pre .copy-button,
 .markdown-content pre .wrap-button {
   position: absolute;
   top: 8px;
-  right: 40px;
   width: 24px;
   height: 24px;
   padding: 0;
-  background-color: #e8eaed;
-  border: none;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
   cursor: pointer;
   opacity: 0;
-  transition: opacity 0.3s;
+  transition: opacity 0.3s, background-color 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -882,39 +858,22 @@ html, body {
   border-radius: 3px;
 }
 
-.markdown-content pre .wrap-button:focus {
-  outline: none;
+.markdown-content pre .copy-button:hover,
+.markdown-content pre .wrap-button:hover {
+  background-color: #f9fafb;
+}
+
+.markdown-content pre .copy-button {
+  right: 8px;
+}
+
+.markdown-content pre .wrap-button {
+  right: 40px;
 }
 
 .markdown-content pre:hover .copy-button,
 .markdown-content pre:hover .wrap-button {
   opacity: 1;
-}
-
-.markdown-content pre .copy-button svg,
-.markdown-content pre .wrap-button svg {
-  fill: #666;
-}
-
-/* 复制成功动画 */
-@keyframes copySuccess {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.1); }
-  100% { transform: scale(1); }
-}
-
-.markdown-content pre .copy-success {
-  animation: copySuccess 0.3s ease-in-out;
-}
-
-.markdown-content pre .copy-button:hover,
-.markdown-content pre .wrap-button:hover {
-  background-color: #d7d9dc;
-}
-
-.markdown-content pre .copy-button:hover svg,
-.markdown-content pre .wrap-button:hover svg {
-  fill: #333;
 }
 
 .markdown-content img {
