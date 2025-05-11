@@ -55,6 +55,7 @@
         :key="file.path"
         :file="file"
         :selected-file="selectedFile"
+        :is-top-level="true"
         @file-select="handleFileSelect"
       />
     </div>

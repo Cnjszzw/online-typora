@@ -1,6 +1,6 @@
 <template>
   <div :class="['file-item', { 'is-selected': selectedFile === file.path }]">
-    <div class="file-name" @click="handleFileSelect(file)">
+    <div class="file-name" :class="{ 'top-level': isTopLevel }" @click="handleFileSelect(file)">
       {{ file.name }}
       <span v-if="file.children" class="arrow-icon" :class="{ expanded: file.isExpanded }" @click.stop="toggleFolder(file)">
         <img src="/arrow-next-small-svgrepo-com.svg" alt="arrow" style="width: 12px; height: 12px;" />
@@ -13,6 +13,7 @@
       :key="child.path"
       :file="child"
       :selected-file="selectedFile"
+      :is-top-level="false"
       @file-select="$emit('file-select', $event)"
     />
   </div>
@@ -29,6 +30,7 @@ interface FileNode {
 const props = defineProps<{
   file: FileNode
   selectedFile: string
+  isTopLevel?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -116,8 +118,7 @@ const handleFileSelect = (file: FileNode) => {
   padding-left: 8px;
 }
 
-/* 添加第一级文件加粗样式 */
-:deep(.file-tree > .file-item > .file-name) {
+.file-name.top-level {
   font-weight: bold;
 }
 </style> 
