@@ -204,28 +204,28 @@ const toggleFolder = (file: FileNode) => {
 }
 
 const handleFileSelect = (path: string) => {
-  // 保存当前文档的位置
-  if (selectedFile.value) {
-    const mainContent = document.querySelector('.main-content')
-    if (mainContent) {
-      saveScrollPosition(selectedFile.value, mainContent.scrollTop)
+    // 保存当前文档的位置
+    if (selectedFile.value) {
+      const mainContent = document.querySelector('.main-content')
+      if (mainContent) {
+        saveScrollPosition(selectedFile.value, mainContent.scrollTop)
+      }
     }
-  }
-  
+    
   selectedFile.value = path
   emit('file-select', path)
-  
-  // 等待文档加载完成后再恢复位置
-  const checkContentLoaded = () => {
-    const mainContent = document.querySelector('.main-content')
-    if (mainContent && mainContent.scrollHeight > 0) {
+    
+    // 等待文档加载完成后再恢复位置
+    const checkContentLoaded = () => {
+      const mainContent = document.querySelector('.main-content')
+      if (mainContent && mainContent.scrollHeight > 0) {
       const storedPosition = getStoredScrollPosition(path)
-      mainContent.scrollTop = storedPosition
-    } else {
-      setTimeout(checkContentLoaded, 100)
+        mainContent.scrollTop = storedPosition
+      } else {
+        setTimeout(checkContentLoaded, 100)
+      }
     }
-  }
-  checkContentLoaded()
+    checkContentLoaded()
 }
 
 const toggleOutlineItem = (item: OutlineItem) => {

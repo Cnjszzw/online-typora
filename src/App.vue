@@ -84,13 +84,31 @@ const md = new MarkdownIt({
       return `<pre class="mermaid" id="${id}">${str}</pre>`
     }
     
+    // 处理代码行数和展开/收起
+    const lines = str.split('\n')
+    const totalLines = lines.length
+    const isLongCode = totalLines > 30
+    const displayLines = isLongCode ? lines.slice(0, 30).join('\n') : str
+    const hiddenLines = isLongCode ? lines.slice(30).join('\n') : ''
+    
+    // 生成行号
+    const lineNumbers = Array.from({ length: isLongCode ? 30 : totalLines }, (_, i) => i + 1).join('\n')
+    const hiddenLineNumbers = isLongCode ? Array.from({ length: totalLines - 30 }, (_, i) => i + 31).join('\n') : ''
+    
     // 处理 URL 类型
     if (lang === 'url') {
-      const lines = str.split('\n')
-      const lineNumbers = lines.length === 1 && lines[0].trim() === '' ? '1' : lines.map((_, i) => i + 1).join('\n')
       return `<pre class="code-block" data-lang="${lang}">
         <div class="lang-tag">${lang}</div>
-        <code data-line-numbers="${lineNumbers}">${str}</code>
+        <code data-line-numbers="${lineNumbers}">${displayLines}</code>
+        ${isLongCode ? `
+          <div class="code-expand-tip">展开显示剩余 ${totalLines - 30} 行代码 ...</div>
+          <div class="hidden-code" style="display: none;">
+            <code data-line-numbers="${hiddenLineNumbers}">${hiddenLines}</code>
+          </div>
+          <button class="expand-button" title="展开/收起代码">
+            <img src="/online-typora/expand.svg" alt="expand" style="width: 14px; height: 14px;" />
+          </button>
+        ` : ''}
         <button class="copy-button" title="复制代码">
           <img src="/online-typora/copy.svg" alt="copy" style="width: 14px; height: 14px;" />
         </button>
@@ -104,12 +122,21 @@ const md = new MarkdownIt({
     if (lang && hljs.getLanguage(lang)) {
       try {
         const highlighted = hljs.highlight(str, { language: lang }).value
-        const lines = str.split('\n')
-        const lineNumbers = lines.length === 1 && lines[0].trim() === '' ? '1' : lines.map((_, i) => i + 1).join('\n')
+        const displayHighlighted = isLongCode ? hljs.highlight(displayLines, { language: lang }).value : highlighted
+        const hiddenHighlighted = isLongCode ? hljs.highlight(hiddenLines, { language: lang }).value : ''
         
         return `<pre class="code-block" data-lang="${lang}">
           <div class="lang-tag">${lang}</div>
-          <code data-line-numbers="${lineNumbers}">${highlighted || ' '}</code>
+          <code data-line-numbers="${lineNumbers}">${displayHighlighted || ' '}</code>
+          ${isLongCode ? `
+            <div class="code-expand-tip">展开显示剩余 ${totalLines - 30} 行代码 ...</div>
+            <div class="hidden-code" style="display: none;">
+              <code data-line-numbers="${hiddenLineNumbers}">${hiddenHighlighted}</code>
+            </div>
+            <button class="expand-button" title="展开/收起代码">
+              <img src="/online-typora/expand.svg" alt="expand" style="width: 14px; height: 14px;" />
+            </button>
+          ` : ''}
           <button class="copy-button" title="复制代码">
             <img src="/online-typora/copy.svg" alt="copy" style="width: 14px; height: 14px;" />
           </button>
@@ -123,11 +150,18 @@ const md = new MarkdownIt({
     }
     
     // 对于不支持的语言，仍然显示代码块，但不进行高亮
-    const lines = str.split('\n')
-    const lineNumbers = lines.length === 1 && lines[0].trim() === '' ? '1' : lines.map((_, i) => i + 1).join('\n')
     return `<pre class="code-block" data-lang="${lang || 'text'}">
       <div class="lang-tag">${lang || 'text'}</div>
-      <code data-line-numbers="${lineNumbers}">${str}</code>
+      <code data-line-numbers="${lineNumbers}">${displayLines}</code>
+      ${isLongCode ? `
+        <div class="code-expand-tip">展开显示剩余 ${totalLines - 30} 行代码 ...</div>
+        <div class="hidden-code" style="display: none;">
+          <code data-line-numbers="${hiddenLineNumbers}">${hiddenLines}</code>
+        </div>
+        <button class="expand-button" title="展开/收起代码">
+          <img src="/online-typora/expand.svg" alt="expand" style="width: 14px; height: 14px;" />
+        </button>
+      ` : ''}
       <button class="copy-button" title="复制代码">
         <img src="/online-typora/copy.svg" alt="copy" style="width: 14px; height: 14px;" />
       </button>
@@ -258,8 +292,9 @@ const initCodeBlocks = () => {
       `
       copyButton.addEventListener('click', async () => {
         const code = block.querySelector('code')?.textContent || ''
+        const hiddenCode = block.querySelector('.hidden-code code')?.textContent || ''
         try {
-          await navigator.clipboard.writeText(code)
+          await navigator.clipboard.writeText(code + hiddenCode)
           copyButton.innerHTML = `
             <svg width="14" height="14" viewBox="0 -1.5 11 11" xmlns="http://www.w3.org/2000/svg">
               <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
@@ -289,20 +324,30 @@ const initCodeBlocks = () => {
         <img src="/online-typora/return.svg" alt="wrap" style="width: 14px; height: 14px;" />
       `
       wrapButton.addEventListener('click', () => {
-        const code = block.querySelector('code')
+        const code = block.querySelector('code') as HTMLElement
+        const hiddenCode = block.querySelector('.hidden-code code') as HTMLElement | null
         if (code) {
           const isWrapped = code.style.whiteSpace === 'pre-wrap'
           code.style.whiteSpace = isWrapped ? 'pre' : 'pre-wrap'
+          if (hiddenCode) {
+            hiddenCode.style.whiteSpace = isWrapped ? 'pre' : 'pre-wrap'
+        }
           
           // 同时调整容器样式
-          const pre = code.closest('pre')
+          const pre = block.closest('pre') as HTMLElement
           if (pre) {
             if (!isWrapped) {
               // 换行模式
               code.style.wordBreak = 'break-all'
+              if (hiddenCode) {
+                hiddenCode.style.wordBreak = 'break-all'
+              }
             } else {
               // 不换行模式
               code.style.wordBreak = 'normal'
+              if (hiddenCode) {
+                hiddenCode.style.wordBreak = 'normal'
+              }
             }
           }
           
@@ -312,15 +357,21 @@ const initCodeBlocks = () => {
             const computedStyle = window.getComputedStyle(code)
             const lineHeight = parseFloat(computedStyle.lineHeight)
             const codeHeight = code.clientHeight
+            const hiddenCodeHeight = hiddenCode ? hiddenCode.clientHeight : 0
             
             // 计算实际行数（包括换行）
             const actualLines = Math.ceil(codeHeight / lineHeight)
+            const hiddenActualLines = Math.ceil(hiddenCodeHeight / lineHeight)
             
             // 生成新的行号
             const lineNumbers = Array.from({ length: actualLines }, (_, i) => i + 1).join('\n')
+            const hiddenLineNumbers = Array.from({ length: hiddenActualLines }, (_, i) => actualLines + i + 1).join('\n')
             
             // 更新行号属性
             code.setAttribute('data-line-numbers', lineNumbers)
+            if (hiddenCode) {
+              hiddenCode.setAttribute('data-line-numbers', hiddenLineNumbers)
+            }
             
             // 确保代码块高度适应内容
             if (pre) {
@@ -329,6 +380,59 @@ const initCodeBlocks = () => {
           }, 100) // 增加延时以确保样式已应用
         }
       })
+    }
+
+    // 添加展开/收起功能
+    const expandButton = block.querySelector('.expand-button')
+    const expandTip = block.querySelector('.code-expand-tip')
+    
+    const toggleExpand = () => {
+      const hiddenCode = block.querySelector('.hidden-code') as HTMLElement
+      const isExpanded = hiddenCode?.style.display !== 'none'
+      
+      if (hiddenCode) {
+        hiddenCode.style.display = isExpanded ? 'none' : 'block'
+        
+        const img = expandButton?.querySelector('img') as HTMLElement
+        if (img) {
+          img.style.transform = isExpanded ? 'rotate(0deg)' : 'rotate(180deg)'
+        }
+        
+        const tipElement = expandTip as HTMLElement
+        if (tipElement) {
+          tipElement.style.display = isExpanded ? 'flex' : 'none'
+        }
+        
+        // 更新代码块高度
+        const pre = block.closest('pre') as HTMLElement
+        if (pre) {
+          pre.style.height = 'auto'
+          
+          // 强制重新计算布局
+          void pre.offsetHeight
+          
+          // 设置新的高度
+          requestAnimationFrame(() => {
+            const mainCode = block.querySelector('code') as HTMLElement
+            const hiddenCodeElement = block.querySelector('.hidden-code code') as HTMLElement
+            if (mainCode && hiddenCodeElement) {
+              const mainHeight = mainCode.getBoundingClientRect().height
+              const hiddenHeight = isExpanded ? 0 : hiddenCodeElement.getBoundingClientRect().height
+              const totalHeight = mainHeight + hiddenHeight
+              pre.style.height = `${totalHeight}px`
+              pre.style.minHeight = `${totalHeight}px`
+            }
+          })
+        }
+      }
+    }
+
+    if (expandButton) {
+      expandButton.addEventListener('click', toggleExpand)
+    }
+
+    if (expandTip) {
+      expandTip.addEventListener('click', toggleExpand)
     }
   })
 }
@@ -741,6 +845,8 @@ html, body {
   width: 100%;
   border: 1px solid #e5e7eb;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  min-height: 0;
+  height: auto !important;
 }
 
 .markdown-content pre .lang-tag {
@@ -776,7 +882,7 @@ html, body {
   display: block;
   position: relative;
   overflow-x: auto;
-  overflow-y: visible;
+  overflow-y: hidden;
   line-height: 1.45;
   font-family: "SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
   padding-left: 32px;
@@ -784,6 +890,8 @@ html, body {
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
   z-index: 1;
+  flex-shrink: 0;
+  background-color: transparent;
 }
 
 /* 自定义横向滚动条样式 */
@@ -845,9 +953,10 @@ html, body {
   overflow: hidden;
 }
 
-/* 复制和换行按钮样式 */
+/* 复制、换行和展开按钮样式 */
 .markdown-content pre .copy-button,
-.markdown-content pre .wrap-button {
+.markdown-content pre .wrap-button,
+.markdown-content pre .expand-button {
   position: absolute;
   top: 8px;
   width: 24px;
@@ -867,7 +976,8 @@ html, body {
 }
 
 .markdown-content pre .copy-button:hover,
-.markdown-content pre .wrap-button:hover {
+.markdown-content pre .wrap-button:hover,
+.markdown-content pre .expand-button:hover {
   background-color: #f9fafb;
 }
 
@@ -879,9 +989,112 @@ html, body {
   right: 40px;
 }
 
+.markdown-content pre .expand-button {
+  right: 72px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.markdown-content pre .expand-button img {
+  transition: transform 0.3s ease;
+}
+
 .markdown-content pre:hover .copy-button,
-.markdown-content pre:hover .wrap-button {
+.markdown-content pre:hover .wrap-button,
+.markdown-content pre:hover .expand-button {
   opacity: 1;
+}
+
+/* 修改代码块容器样式 */
+.code-block {
+  width: 100% !important;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  height: auto !important;
+}
+
+/* 隐藏代码样式 */
+.markdown-content pre .hidden-code {
+  margin: 0;
+  padding: 0;
+  border-top: none;
+  display: none;
+  flex-shrink: 0;
+  min-height: 0;
+  position: relative;
+  background-color: #f3f4f6;
+  line-height: 0;
+  width: 100%;
+  height: auto;
+}
+
+.markdown-content pre .hidden-code code {
+  margin: 0;
+  padding: 0 8px 0 32px;
+  border: none;
+  flex-shrink: 0;
+  background-color: transparent;
+  position: relative;
+  line-height: 1.45;
+  display: block;
+  width: 100%;
+  white-space: pre;
+  font-family: "SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  height: auto;
+}
+
+.markdown-content pre .hidden-code code::before {
+  content: attr(data-line-numbers);
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 30px;
+  padding: 0 6px 0 2px;
+  color: #999;
+  font-size: 100%;
+  line-height: 1.45;
+  text-align: right;
+  user-select: none;
+  pointer-events: none;
+  font-family: "SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  box-sizing: border-box;
+  background-color: #f0f0f0;
+  border-right: 1px solid #eee;
+  white-space: pre;
+  overflow: hidden;
+}
+
+/* 展开提示样式 */
+.markdown-content pre .code-expand-tip {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(180deg, rgba(243, 244, 246, 0) 0%, rgba(243, 244, 246, 0.9) 40%, rgba(243, 244, 246, 1) 100%);
+  padding: 30px 0 8px 32px;
+  margin: 0;
+  font-size: 13px;
+  color: #666;
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: flex-end;
+  z-index: 2;
+}
+
+.markdown-content pre .code-expand-tip:hover {
+  color: #1890ff;
+}
+
+/* 语言标签位置调整 */
+.markdown-content pre::before {
+  right: 0;
+  z-index: 1;
 }
 
 .markdown-content img {
@@ -982,35 +1195,5 @@ html, body {
 /* 确保文件名显示在滚动条之上 */
 .main-content {
   position: relative;
-}
-
-/* 修改代码块容器样式 */
-.code-block {
-  width: 100% !important;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-}
-
-/* 确保按钮位置正确 */
-.markdown-content pre .copy-button,
-.markdown-content pre .wrap-button {
-  position: absolute;
-  top: 8px;
-  z-index: 2;
-}
-
-.markdown-content pre .copy-button {
-  right: 8px;
-}
-
-.markdown-content pre .wrap-button {
-  right: 40px;
-}
-
-/* 语言标签位置调整 */
-.markdown-content pre::before {
-  right: 0;
-  z-index: 1;
 }
 </style>

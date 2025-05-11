@@ -41,6 +41,62 @@ function hello() {
 def greet(name):
     print(f"Hello, {name}!")
     return True
+    def greet(name):
+    print(f"Hello, {name}!")
+    return True
+    def greet(name):
+    print(f"Hello, {name}!")
+    return True
+    def greet(name):
+    print(f"Hello, {name}!")
+    return True
+    def greet(name):
+    print(f"Hello, {name}!")
+    return True
+    def greet(name):
+    print(f"Hello, {name}!")
+    return True
+    def greet(name):
+    print(f"Hello, {name}!")
+    return True
+    def greet(name):
+    print(f"Hello, {name}!")
+    return Truedef greet(name):
+    print(f"Hello, {name}!")
+    return Truedef greet(name):
+    print(f"Hello, {name}!")
+    return True
+        def greet(name):
+    print(f"Hello, {name}!")
+    return True
+    def greet(name):
+    print(f"Hello, {name}!")
+    return True
+    def greet(name):
+    print(f"Hello, {name}!")
+    return True
+    def greet(name):
+    print(f"Hello, {name}!")
+    return True
+    def greet(name):
+    print(f"Hello, {name}!")
+    return True
+    def greet(name):
+    print(f"Hello, {name}!")
+    return Truedef greet(name):
+    print(f"Hello, {name}!")
+    return Truedef greet(name):
+    print(f"Hello, {name}!")
+    return True
+    
+    
+    def greet(name):
+    print(f"Hello, {name}!")
+    return True
+    
+    
+    
+    
 ```
 
 ## 4. 表格
