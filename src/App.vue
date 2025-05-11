@@ -718,6 +718,9 @@ html, body {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  width: fit-content;
+  min-width: 300px;
+  max-width: 100%;
 }
 
 .markdown-content pre code {
@@ -730,13 +733,15 @@ html, body {
   border: 0;
   display: block;
   position: relative;
-  overflow-x: auto; /* 允许横向滚动 */
-  overflow-y: visible; /* 确保垂直方向完全显示 */
+  overflow-x: auto;
+  overflow-y: visible;
   line-height: 1.45;
   font-family: "SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
   padding-left: 32px;
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+  width: max-content;
+  min-width: 100%;
 }
 
 /* 自定义横向滚动条样式 */
@@ -987,5 +992,37 @@ html, body {
 /* 确保文件名显示在滚动条之上 */
 .main-content {
   position: relative;
+}
+
+/* 修改代码块容器样式 */
+.code-block {
+  width: fit-content !important;
+  min-width: 300px;
+  max-width: 100%;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 确保按钮位置正确 */
+.markdown-content pre .copy-button,
+.markdown-content pre .wrap-button {
+  position: absolute;
+  top: 8px;
+  z-index: 2;
+}
+
+.markdown-content pre .copy-button {
+  right: 8px;
+}
+
+.markdown-content pre .wrap-button {
+  right: 40px;
+}
+
+/* 语言标签位置调整 */
+.markdown-content pre::before {
+  right: 0;
+  z-index: 1;
 }
 </style>
