@@ -354,6 +354,7 @@ const initCodeBlocks = () => {
         const pre = block.closest('pre') as HTMLElement
         const code = block.querySelector('code') as HTMLElement
         const hiddenCode = block.querySelector('.hidden-code code') as HTMLElement | null
+        const codeWrapper = block.querySelector('.code-content-wrapper') as HTMLElement
         
         const isWrapped = code.style.whiteSpace === 'pre-wrap'
         
@@ -369,22 +370,29 @@ const initCodeBlocks = () => {
           if (hiddenCode) {
             hiddenCode.style.wordBreak = 'break-all'
           }
+          // 重置滚动容器的宽度
+          if (codeWrapper) {
+            codeWrapper.style.minWidth = 'auto'
+            codeWrapper.style.width = '100%'
+          }
         } else {
           // 不换行模式
           code.style.wordBreak = 'normal'
           if (hiddenCode) {
             hiddenCode.style.wordBreak = 'normal'
           }
+          // 确保滚动容器可以容纳完整的代码
+          if (codeWrapper) {
+            codeWrapper.style.minWidth = '0'
+            codeWrapper.style.width = '100%'
+          }
         }
         
         // 等待DOM更新完成后重新计算行号
         requestAnimationFrame(() => {
           // 强制重新计算布局
-          const codeWrapper = block.querySelector('.code-content-wrapper') as HTMLElement
           if (codeWrapper) {
-            codeWrapper.style.minWidth = 'auto'
             void codeWrapper.offsetWidth
-            codeWrapper.style.minWidth = 'fit-content'
           }
           
           // 计算实际显示的行数
@@ -922,6 +930,7 @@ html, body {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   min-height: 0;
   height: auto !important;
+  min-width: 0;
 }
 
 .markdown-content pre .code-content-wrapper {
@@ -933,6 +942,7 @@ html, body {
   flex-direction: column;
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+  min-width: 0;
 }
 
 .markdown-content pre code {
@@ -953,6 +963,7 @@ html, body {
   flex-shrink: 0;
   background-color: transparent;
   min-width: fit-content;
+  max-width: none;
 }
 
 .markdown-content pre code::before {
@@ -1047,21 +1058,37 @@ html, body {
   margin: 0;
   padding: 0;
   overflow: visible;
+  min-width: 0;
 }
 
 /* 自定义横向滚动条样式 */
 .markdown-content pre .code-content-wrapper::-webkit-scrollbar {
   height: 6px;
   background-color: transparent;
+  display: block !important;
 }
 
 .markdown-content pre .code-content-wrapper::-webkit-scrollbar-thumb {
   background-color: rgba(0, 0, 0, 0.2);
   border-radius: 3px;
+  display: block !important;
 }
 
 .markdown-content pre .code-content-wrapper::-webkit-scrollbar-track {
   background-color: transparent;
+  display: block !important;
+}
+
+/* 确保在不换行模式下也显示滚动条 */
+.markdown-content pre .code-content-wrapper {
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 确保代码内容不会被截断 */
+.markdown-content pre code[style*="white-space: pre"] {
+  overflow: visible;
+  text-overflow: initial;
 }
 
 /* 只在鼠标悬浮时显示横向滚动条 */
