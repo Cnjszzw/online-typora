@@ -732,7 +732,7 @@ html, body {
 .markdown-content pre {
   position: relative;
   padding: 8px 4px;
-  padding-right: 84px;
+  padding-right: 8px; /* 减小右侧padding */
   font-size: 85%;
   line-height: 1.45;
   background-color: #f3f4f6;
@@ -763,8 +763,10 @@ html, body {
   line-height: 1.45;
   font-family: "SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
   padding-left: 32px;
+  padding-right: 8px;
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+  z-index: 1; /* 确保滚动条在按钮下方 */
 }
 
 /* 自定义横向滚动条样式 */
@@ -801,8 +803,10 @@ html, body {
   padding: 2px 8px;
   font-size: 12px;
   color: #4b5563;
-  background-color: #e5e7eb;
+  background-color: #ffffff;
   border-bottom-left-radius: 3px;
+  border-left: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
   opacity: 1;
   transition: opacity 0.3s;
   z-index: 2;
@@ -854,7 +858,7 @@ html, body {
   align-items: center;
   justify-content: center;
   outline: none;
-  z-index: 2;
+  z-index: 3; /* 确保按钮在最上层 */
   border-radius: 3px;
 }
 
