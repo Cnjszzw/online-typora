@@ -401,6 +401,20 @@ const loadFileList = async () => {
       throw new Error(`HTTP error! status: ${response.status}`)
     }
     const files = await response.json()
+    // 设置第一级默认展开
+    files.forEach(file => {
+      file.isExpanded = true
+      if (file.children) {
+        file.children.forEach(child => {
+          child.isExpanded = false
+          if (child.children) {
+            child.children.forEach(grandChild => {
+              grandChild.isExpanded = false
+            })
+          }
+        })
+      }
+    })
     fileTree.value = files
   } catch (error) {
     console.error('Error loading file list:', error)
@@ -616,9 +630,11 @@ onUnmounted(() => {
 
 .file-tree {
   flex: 1;
-  overflow-y: auto;
+  overflow-y: scroll;
   overflow-x: hidden;
   padding: 10px;
+  padding-right: 16px;
+  position: relative;
 }
 
 .file-item {
@@ -631,6 +647,7 @@ onUnmounted(() => {
   display: flex;
   align-items: flex-start;
   padding-right: 16px;
+  user-select: none;
 }
 
 .file-item:hover {
@@ -651,8 +668,35 @@ onUnmounted(() => {
   word-break: break-all;
   line-height: 1.4;
   position: relative;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
+/* 添加第一级文件加粗样式 */
+.file-tree > .file-item > .file-name {
+  font-weight: bold;
+}
+
+/* 修改滚动条样式 */
+.file-tree::-webkit-scrollbar {
+  width: 6px;
+  position: absolute;
+  right: 0;
+  background-color: transparent;
+}
+
+.file-tree::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.file-tree::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+/* 确保箭头位置固定 */
 .arrow-icon {
   display: flex;
   align-items: center;
@@ -667,6 +711,7 @@ onUnmounted(() => {
   position: absolute;
   right: -16px;
   transition: transform 0.2s ease;
+  z-index: 1;
 }
 
 .arrow-icon.expanded {
@@ -720,6 +765,10 @@ onUnmounted(() => {
   word-break: break-all;
   line-height: 1.4;
   position: relative;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .outline-text {
@@ -829,5 +878,63 @@ onUnmounted(() => {
   white-space: nowrap;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   transition: opacity 0.2s;
+}
+
+/* 添加resize-handle样式 */
+.resize-handle {
+  width: 4px;
+  cursor: col-resize;
+  background-color: transparent;
+  transition: background-color 0.2s;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  position: relative;
+  z-index: 10;
+}
+
+.resize-handle:hover {
+  background-color: #1890ff;
+}
+
+/* 禁止所有可拖动元素的文字选中 */
+.file-name, .outline-name, .tab-text {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* 添加全局禁止选中样式 */
+:deep(*) {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* 允许输入框和文本区域选中 */
+:deep(input), :deep(textarea) {
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+}
+
+/* 确保内容区域也被禁止选中 */
+.content-container {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* 确保主内容区域也被禁止选中 */
+.main-content {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 </style> 
