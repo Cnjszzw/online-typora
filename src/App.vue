@@ -192,7 +192,8 @@ md.renderer.rules.html_block = function (tokens: any[], idx: number, _options: a
 const markdownContent = ref('')
 const currentOutline = ref<{ id: string; text: string; level: number; children?: any[] }[]>([])
 const selectedHeading = ref('')
-const isUserClick = ref(false) // 添加用户点击标记
+const isUserClick = ref(false)
+const currentFileName = ref('') // 添加当前文件名状态
 
 // 监听markdownContent变化，初始化mermaid图表和代码块功能
 watch(markdownContent, async () => {
@@ -257,6 +258,9 @@ const initCodeBlocks = () => {
 const loadMarkdownContent = async (filePath: string) => {
   try {
     console.log('开始加载文件:', filePath)
+    // 从文件路径中提取文件名
+    currentFileName.value = filePath.split('/').pop() || ''
+    
     const response = await fetch(filePath)
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)
@@ -395,6 +399,7 @@ const loadMarkdownContent = async (filePath: string) => {
   } catch (error) {
     console.error('Error loading markdown file:', error)
     markdownContent.value = '加载文件失败'
+    currentFileName.value = '' // 加载失败时清空文件名
   }
 }
 
@@ -476,6 +481,9 @@ defineExpose({
       <div class="content-container">
         <div class="main-content">
           <div class="markdown-content" v-html="markdownContent"></div>
+          <div class="file-name-display" v-if="currentFileName">
+            {{ currentFileName }}
+          </div>
         </div>
       </div>
     </div>
@@ -587,6 +595,7 @@ html, body {
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
+  position: relative;
 }
 
 .markdown-content {
@@ -864,5 +873,31 @@ html, body {
   border-radius: 4px;
   margin: 10px 0;
   text-align: center;
+}
+
+/* 文件名显示样式 */
+.file-name-display {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: opacity 0.3s ease;
+  opacity: 0.8;
+}
+
+.file-name-display:hover {
+  opacity: 1;
+}
+
+/* 确保文件名显示在滚动条之上 */
+.main-content {
+  position: relative;
 }
 </style>
