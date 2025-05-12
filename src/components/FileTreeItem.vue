@@ -56,7 +56,7 @@ const handleFileSelect = (file: FileNode) => {
 .file-item {
   padding: 5px 10px;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 0;
   position: relative;
   text-align: left;
   transition: background-color 0.2s;
@@ -64,15 +64,19 @@ const handleFileSelect = (file: FileNode) => {
   align-items: flex-start;
   padding-right: 16px;
   user-select: none;
+  margin-left: -2px;
+  margin-right: -2px;
 }
 
 .file-item:hover {
-  background-color: #f5f5f5;
+  background-color: rgba(24, 144, 255, 0.05);
+  border-left: 2px solid rgba(24, 144, 255, 0.3);
 }
 
 .file-item.is-selected {
-  background-color: #d9eaf4;
+  background-color: rgba(24, 144, 255, 0.1);
   color: #1890ff;
+  border-left: 2px solid #1890ff;
 }
 
 .file-name {
@@ -88,6 +92,12 @@ const handleFileSelect = (file: FileNode) => {
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
+  transition: color 0.2s ease;
+}
+
+.file-item:hover .file-name,
+.file-item.is-selected .file-name {
+  color: #1890ff;
 }
 
 .arrow-icon {
@@ -103,18 +113,23 @@ const handleFileSelect = (file: FileNode) => {
   flex-shrink: 0;
   position: absolute;
   right: -16px;
-  transition: transform 0.2s ease;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  opacity: 0.5;
   z-index: 1;
+}
+
+.arrow-icon:hover {
+  opacity: 0.8;
 }
 
 .arrow-icon.expanded {
   transform: rotate(90deg);
+  opacity: 0.8;
 }
 
 .children {
   width: calc(100% - 12px);
   margin-left: 12px;
-  border-left: 1px dashed #1890ff;
   padding-left: 8px;
 }
 

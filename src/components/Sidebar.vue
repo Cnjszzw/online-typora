@@ -441,10 +441,11 @@ onUnmounted(() => {
   width: 100%;
 }
 
-.file-item {
+.file-item,
+.outline-item {
   padding: 5px 10px;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 0;
   position: relative;
   text-align: left;
   transition: background-color 0.2s;
@@ -452,14 +453,44 @@ onUnmounted(() => {
   align-items: flex-start;
   padding-right: 16px;
   user-select: none;
+  margin-left: -2px;
+  margin-right: -2px;
 }
 
-.file-item:hover {
-  background-color: #f5f5f5;
+.file-item:hover,
+.outline-item:hover {
+  background-color: rgba(24, 144, 255, 0.05);
+  border-left: 2px solid rgba(24, 144, 255, 0.3);
 }
 
-.file-item.is-selected {
-  background-color: #d9eaf4;
+.file-item.is-selected,
+.outline-item.is-selected {
+  background-color: rgba(24, 144, 255, 0.1);
+  color: #1890ff;
+  border-left: 2px solid #1890ff;
+}
+
+.file-name,
+.outline-name {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  white-space: normal;
+  word-break: break-all;
+  line-height: 1.4;
+  position: relative;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  transition: color 0.2s ease;
+}
+
+.file-item:hover .file-name,
+.file-item.is-selected .file-name,
+.outline-item:hover .outline-name,
+.outline-item.is-selected .outline-name {
   color: #1890ff;
 }
 
@@ -476,6 +507,11 @@ onUnmounted(() => {
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
+  transition: color 0.2s ease;
+}
+
+.file-name:hover {
+  color: #1890ff;
 }
 
 /* 添加第一级文件加粗样式 */
@@ -514,18 +550,23 @@ onUnmounted(() => {
   flex-shrink: 0;
   position: absolute;
   right: -16px;
-  transition: transform 0.2s ease;
+  transition: transform 0.2s ease, opacity 0.2s ease;
   z-index: 1;
+  opacity: 0.5;
+}
+
+.arrow-icon:hover {
+  opacity: 0.8;
 }
 
 .arrow-icon.expanded {
   transform: rotate(90deg);
+  opacity: 0.8;
 }
 
 .children {
   width: calc(100% - 12px);
   margin-left: 12px;
-  border-left: 1px dashed #1890ff;
   padding-left: 8px;
 }
 
@@ -585,13 +626,16 @@ onUnmounted(() => {
 }
 
 .outline-item:hover {
-  background-color: #f5f5f5;
+  background-color: rgba(24, 144, 255, 0.05);
+  border-left: 2px solid rgba(24, 144, 255, 0.3);
+  border-radius: 0;
 }
 
 .outline-item.is-selected {
-  background-color: #e6f7ff;
+  background-color: rgba(24, 144, 255, 0.1);
   color: #1890ff;
-  font-weight: 500;
+  border-left: 2px solid #1890ff;
+  border-radius: 0;
 }
 
 .outline-name {
@@ -618,12 +662,17 @@ onUnmounted(() => {
   white-space: normal;
   word-break: break-all;
   margin-right: 8px;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.outline-text:hover {
+  color: #1890ff;
 }
 
 .outline .children {
   width: calc(100% - 12px);
   margin-left: 12px;
-  border-left: 1px dashed #1890ff;
   padding-left: 8px;
 }
 
@@ -762,5 +811,26 @@ onUnmounted(() => {
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
+}
+
+/* 修改工具栏样式 */
+:deep(.toolbar-item) {
+  transition: background-color 0.2s;
+}
+
+:deep(.toolbar-item:hover) {
+  background-color: rgba(24, 144, 255, 0.05);
+  border-left: 2px solid rgba(24, 144, 255, 0.3);
+  border-radius: 0;
+}
+
+:deep(.toolbar-item.active) {
+  background-color: rgba(24, 144, 255, 0.1);
+  border-left: 2px solid #1890ff;
+  border-radius: 0;
+}
+
+:deep(.toolbar-item img) {
+  opacity: 1;
 }
 </style> 

@@ -4,9 +4,11 @@
       class="toolbar-item" 
       :class="{ active: activeTab === 'files' }"
       @click="handleTabClick('files')"
+      @mouseenter="hoveredItem = 'files'"
+      @mouseleave="hoveredItem = ''"
     >
       <img 
-        :src="activeTab === 'files' ? folderIcon : folderIcon" 
+        :src="(activeTab === 'files' || hoveredItem === 'files') ? folderSelectedIcon : folderIcon" 
         alt="files"
         class="toolbar-icon"
       />
@@ -15,9 +17,11 @@
       class="toolbar-item" 
       :class="{ active: activeTab === 'outline' }"
       @click="handleTabClick('outline')"
+      @mouseenter="hoveredItem = 'outline'"
+      @mouseleave="hoveredItem = ''"
     >
       <img 
-        :src="activeTab === 'outline' ? hierarchyIcon : hierarchyIcon" 
+        :src="(activeTab === 'outline' || hoveredItem === 'outline') ? hierarchySelectedIcon : hierarchyIcon" 
         alt="outline"
         class="toolbar-icon"
       />
@@ -26,9 +30,11 @@
       class="toolbar-item" 
       :class="{ active: activeTab === 'search' }"
       @click="handleTabClick('search')"
+      @mouseenter="hoveredItem = 'search'"
+      @mouseleave="hoveredItem = ''"
     >
       <img 
-        :src="searchIcon" 
+        :src="(activeTab === 'search' || hoveredItem === 'search') ? searchSelectedIcon : searchIcon" 
         alt="search"
         class="toolbar-icon"
       />
@@ -39,8 +45,11 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
 import folderIcon from '/folder.svg'
+import folderSelectedIcon from '/folder-selected.svg'
 import hierarchyIcon from '/hierarchy.svg'
+import hierarchySelectedIcon from '/hierarchy-selected.svg'
 import searchIcon from '/search.svg'
+import searchSelectedIcon from '/search-selected.svg'
 
 const props = defineProps<{
   initialTab?: string
@@ -51,6 +60,7 @@ const emit = defineEmits<{
 }>()
 
 const activeTab = ref(props.initialTab || 'files')
+const hoveredItem = ref('')
 
 const handleTabClick = (tab: string) => {
   activeTab.value = tab
@@ -83,15 +93,11 @@ const handleTabClick = (tab: string) => {
 }
 
 .toolbar-item:hover {
-  background-color: #e6e6e6;
+  background-color: rgba(24, 144, 255, 0.05);
 }
 
 .toolbar-item.active {
-  background-color: #1890ff;
-}
-
-.toolbar-item.active .toolbar-icon {
-  filter: brightness(0) invert(1);
+  background-color: rgba(24, 144, 255, 0.1);
 }
 
 .toolbar-icon {
