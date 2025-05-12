@@ -915,7 +915,7 @@ html, body {
 }
 
 .markdown-content {
-  padding: 20px;
+  padding: 0 20px;
   text-align: left;
   max-width: 100%;
   height: 100%;
