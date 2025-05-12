@@ -1070,13 +1070,28 @@ html, body {
 
 .markdown-content pre .code-content-wrapper::-webkit-scrollbar-thumb {
   background-color: rgba(0, 0, 0, 0.2);
-  border-radius: 3px;
+  border-radius: 0;
   display: block !important;
 }
 
 .markdown-content pre .code-content-wrapper::-webkit-scrollbar-track {
   background-color: transparent;
   display: block !important;
+}
+
+/* 主内容区域滚动条样式 */
+.main-content::-webkit-scrollbar {
+  width: 6px;
+  background-color: transparent;
+}
+
+.main-content::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 0;
+}
+
+.main-content::-webkit-scrollbar-track {
+  background-color: transparent;
 }
 
 /* 确保在不换行模式下也显示滚动条 */

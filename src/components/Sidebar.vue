@@ -529,7 +529,7 @@ onUnmounted(() => {
 
 .file-tree::-webkit-scrollbar-thumb {
   background-color: rgba(0, 0, 0, 0.2);
-  border-radius: 3px;
+  border-radius: 0;
 }
 
 .file-tree::-webkit-scrollbar-track {
@@ -589,7 +589,7 @@ onUnmounted(() => {
 
 .outline::-webkit-scrollbar-thumb {
   background-color: rgba(0, 0, 0, 0.2);
-  border-radius: 3px;
+  border-radius: 0;
 }
 
 .outline::-webkit-scrollbar-track {

@@ -772,12 +772,12 @@ const getFileExt = (fileName: string) => {
 }
 
 .search-results::-webkit-scrollbar-thumb {
-  background: #ccc;
-  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 0;
 }
 
 .search-results::-webkit-scrollbar-thumb:hover {
-  background: #999;
+  background: rgba(0, 0, 0, 0.3);
 }
 
 /* 添加性能优化相关的样式 */
