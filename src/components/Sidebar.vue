@@ -1,109 +1,70 @@
 <template>
   <div class="sidebar">
-    <div class="tabs" v-if="!showSearch">
-      <div class="tab-container">
-        <div class="left-section">
-<!--          <div class="icon-wrapper" -->
-<!--            @mouseenter="showTooltip($event, activeTab === 'files' ? '切换到大纲视图' : '切换到文件树视图')" -->
-<!--            @mouseleave="hideTooltip"-->
-<!--            @click="handleIconClick"-->
-<!--          >-->
-          <div class="icon-wrapper"
-               @click="handleIconClick"
-          >
-            <img 
-              :src="activeTab === 'files' ? folderIcon : hierarchyIcon" 
-              alt="icon"
-              class="tab-icon"
-              @click="activeTab = activeTab === 'files' ? 'outline' : 'files'"
-            />
-            <div class="custom-tooltip" v-show="tooltipVisible && currentTooltip === 'left'" :style="tooltipStyle">
-              {{ tooltipText }}
-            </div>
-          </div>
-        </div>
-        <div class="center-section">
-          <span class="tab-text">{{ activeTab === 'files' ? '文件' : '大纲' }}</span>
-        </div>
-        <div class="right-section">
-<!--          <div class="icon-wrapper" -->
-<!--            @mouseenter="showTooltip($event, '查找/搜索')" -->
-<!--            @mouseleave="hideTooltip"-->
-<!--            @click="handleSearchClick"-->
-<!--          >-->
-          <div class="icon-wrapper"
-               @click="handleSearchClick"
-          >
-            <img 
-              :src="searchIcon" 
-              alt="search"
-              class="tab-icon search-icon"
-            />
-            <div class="custom-tooltip" v-show="tooltipVisible && currentTooltip === 'right'" :style="tooltipStyle">
-              {{ tooltipText }}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    
-    <Search v-if="showSearch" @exit-search="showSearch = false" :sidebar-width="props.sidebarWidth" />
-    
-    <div v-else-if="activeTab === 'files'" class="file-tree">
-      <FileTreeItem
-        v-for="file in fileTree"
-        :key="file.path"
-        :file="file"
-        :selected-file="selectedFile"
-        :is-top-level="true"
-        @file-select="handleFileSelect"
+    <div class="sidebar-content">
+      <SidebarToolbar 
+        :initial-tab="activeTab"
+        @tab-change="handleTabChange"
       />
-    </div>
-    
-    <div v-else class="outline">
-      <template v-if="outline.length > 0">
-        <template v-for="item in outline" :key="item.id">
-          <div class="outline-item" :class="{ 'is-selected': selectedHeading === item.id }">
-            <div class="outline-name" @click="handleHeadingClick(item.id)">
-              <span class="outline-text">{{ item.text }}</span>
-              <span class="arrow-icon" :class="{ expanded: item.isExpanded }" @click.stop="toggleOutlineItem(item)">
-                <template v-if="item.children && item.children.length > 0">
-                  <img src="/arrow-next-small-svgrepo-com.svg" alt="arrow" style="width: 12px; height: 12px;" />
-                </template>
-              </span>
-            </div>
-          </div>
-          <template v-if="item.children && item.isExpanded">
-            <div class="children">
-              <template v-for="child in item.children" :key="child.id">
-                <div class="outline-item" :class="{ 'is-selected': selectedHeading === child.id }">
-                  <div class="outline-name" @click="handleHeadingClick(child.id)">
-                    <span class="outline-text">{{ child.text }}</span>
-                    <span class="arrow-icon" :class="{ expanded: child.isExpanded }" @click.stop="toggleOutlineItem(child)">
-                      <template v-if="child.children && child.children.length > 0">
-                        <img src="/arrow-next-small-svgrepo-com.svg" alt="arrow" style="width: 12px; height: 12px;" />
-                      </template>
-                    </span>
-                  </div>
+      <div class="sidebar-main">
+        <Search v-if="activeTab === 'search'" @exit-search="handleExitSearch" :sidebar-width="props.sidebarWidth" />
+        
+        <div v-else-if="activeTab === 'files'" class="file-tree">
+          <FileTreeItem
+            v-for="file in fileTree"
+            :key="file.path"
+            :file="file"
+            :selected-file="selectedFile"
+            :is-top-level="true"
+            @file-select="handleFileSelect"
+          />
+        </div>
+        
+        <div v-else class="outline">
+          <template v-if="outline.length > 0">
+            <template v-for="item in outline" :key="item.id">
+              <div class="outline-item" :class="{ 'is-selected': selectedHeading === item.id }">
+                <div class="outline-name" @click="handleHeadingClick(item.id)">
+                  <span class="outline-text">{{ item.text }}</span>
+                  <span class="arrow-icon" :class="{ expanded: item.isExpanded }" @click.stop="toggleOutlineItem(item)">
+                    <template v-if="item.children && item.children.length > 0">
+                      <img src="/arrow-next-small-svgrepo-com.svg" alt="arrow" style="width: 12px; height: 12px;" />
+                    </template>
+                  </span>
                 </div>
-                <template v-if="child.children && child.isExpanded">
-                  <div class="children">
-                    <template v-for="grandChild in child.children" :key="grandChild.id">
-                      <div class="outline-item" :class="{ 'is-selected': selectedHeading === grandChild.id }">
-                        <div class="outline-name" @click="handleHeadingClick(grandChild.id)">
-                          <span class="outline-text">{{ grandChild.text }}</span>
-                        </div>
+              </div>
+              <template v-if="item.children && item.isExpanded">
+                <div class="children">
+                  <template v-for="child in item.children" :key="child.id">
+                    <div class="outline-item" :class="{ 'is-selected': selectedHeading === child.id }">
+                      <div class="outline-name" @click="handleHeadingClick(child.id)">
+                        <span class="outline-text">{{ child.text }}</span>
+                        <span class="arrow-icon" :class="{ expanded: child.isExpanded }" @click.stop="toggleOutlineItem(child)">
+                          <template v-if="child.children && child.children.length > 0">
+                            <img src="/arrow-next-small-svgrepo-com.svg" alt="arrow" style="width: 12px; height: 12px;" />
+                          </template>
+                        </span>
+                      </div>
+                    </div>
+                    <template v-if="child.children && child.isExpanded">
+                      <div class="children">
+                        <template v-for="grandChild in child.children" :key="grandChild.id">
+                          <div class="outline-item" :class="{ 'is-selected': selectedHeading === grandChild.id }">
+                            <div class="outline-name" @click="handleHeadingClick(grandChild.id)">
+                              <span class="outline-text">{{ grandChild.text }}</span>
+                            </div>
+                          </div>
+                        </template>
                       </div>
                     </template>
-                  </div>
-                </template>
+                  </template>
+                </div>
               </template>
-            </div>
+            </template>
           </template>
-        </template>
-      </template>
-      <div v-else class="empty-outline">
-        当前文件没有大纲
+          <div v-else class="empty-outline">
+            当前文件没有大纲
+          </div>
+        </div>
       </div>
     </div>
 
@@ -120,11 +81,9 @@
 
 <script lang="ts" setup>
 import { ref, onMounted, watch, onUnmounted } from 'vue'
-import searchIcon from '/search.svg'
-import folderIcon from '/folder.svg'
-import hierarchyIcon from '/hierarchy.svg'
 import Search from './Search.vue'
 import FileTreeItem from './FileTreeItem.vue'
+import SidebarToolbar from './SidebarToolbar.vue'
 
 interface FileNode {
   name: string
@@ -160,21 +119,6 @@ const showBackToTop = ref(false)
 let observer: IntersectionObserver | null = null
 let lastScrollTop = 0
 let scrollTimeout: number | null = null
-const tooltipVisible = ref(false)
-const tooltipText = ref('')
-const currentTooltip = ref<'left' | 'right' | null>(null)
-const tooltipStyle = ref<{
-  display: string,
-  position: 'static' | 'relative' | 'absolute' | 'fixed' | 'sticky',
-  left: string,
-  top: string
-}>({
-  display: 'none',
-  position: 'absolute',
-  left: '0',
-  top: '0'
-})
-const showSearch = ref(false)
 
 // 获取存储的文档位置
 const getStoredScrollPosition = (filePath: string): number => {
@@ -423,44 +367,12 @@ const scrollToTop = () => {
   }
 }
 
-const handleIconClick = () => {
-  hideTooltip()
+const handleTabChange = (tab: string) => {
+  activeTab.value = tab
 }
 
-const handleSearchClick = () => {
-  showSearch.value = true
-  hideTooltip()
-}
-
-// const showTooltip = (event: MouseEvent, text: string) => {
-//   tooltipText.value = text
-//   tooltipVisible.value = true
-//   currentTooltip.value = (event.currentTarget as HTMLElement).closest('.left-section') ? 'left' : 'right'
-//
-//   // 计算 tooltip 的位置
-//   const target = event.currentTarget as HTMLElement
-//   const rect = target.getBoundingClientRect()
-//
-//   if (currentTooltip.value === 'left') {
-//     tooltipStyle.value = {
-//       position: 'absolute',
-//       left: `${rect.right + 8}px`,
-//       top: `${rect.top + rect.height / 2 - 10}px`,
-//       display: 'block'
-//     }
-//   } else {
-//     tooltipStyle.value = {
-//       position: 'fixed',
-//       left: `${rect.left}px`,
-//       top: `${rect.bottom + 2}px`,
-//       display: 'block'
-//     }
-//   }
-// }
-
-const hideTooltip = () => {
-  tooltipVisible.value = false
-  currentTooltip.value = null
+const handleExitSearch = () => {
+  activeTab.value = 'files'
 }
 
 onMounted(() => {
@@ -505,99 +417,28 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
-.tabs {
-  display: flex;
-  border-bottom: 1px solid #e0e0e0;
-  height: 48px;
-}
-
-.tab-container {
+.sidebar-content {
   flex: 1;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 16px;
-  height: 100%;
+  overflow: hidden;
   position: relative;
 }
 
-.left-section {
+.sidebar-main {
+  flex: 1;
+  overflow: hidden;
   display: flex;
-  align-items: center;
-  height: 100%;
-  width: 26px;
-  position: relative;
-}
-
-.center-section {
-  position: absolute;
-  left: calc(50% + 6px);
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  white-space: nowrap;
-}
-
-.right-section {
-  display: flex;
-  align-items: center;
-  height: 100%;
-  width: 26px;
-  position: relative;
-}
-
-.tab-icon, .search-icon {
-  &[title] {
-    pointer-events: auto;
-  }
-  
-  &:hover {
-    cursor: pointer;
-  }
-}
-
-.tab-icon {
-  width: 24px;
-  height: 24px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.search-icon {
-  width: 24px;
-  height: 24px;
-  position: absolute;
-  right: -10px;
-  top: 12px;
-  cursor: pointer;
-}
-
-[title] {
-  transition-delay: 0s;
-}
-
-.tab-text {
-  font-size: 14px;
-  font-weight: bold;
-  user-select: none;
-  color: #000000;
-  line-height: 18px;
-  height: 18px;
-  display: flex;
-  align-items: center;
+  flex-direction: column;
+  width: 300px;
 }
 
 .file-tree {
   flex: 1;
   overflow-y: scroll;
   overflow-x: hidden;
-  padding: 10px;
-  padding-right: 16px;
+  padding: 10px 16px 10px 5px;
   position: relative;
+  width: 100%;
 }
 
 .file-item {
@@ -692,9 +533,9 @@ onUnmounted(() => {
   flex: 1;
   overflow-y: scroll;
   overflow-x: hidden;
-  padding: 10px;
-  padding-right: 16px;
+  padding: 10px 16px 10px 5px;
   position: relative;
+  width: 100%;
 }
 
 /* 修改大纲滚动条样式 */

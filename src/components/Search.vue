@@ -498,6 +498,7 @@ const getFileExt = (fileName: string) => {
   -ms-user-select: none;
   will-change: width;
   transform: translateZ(0);
+  width: 300px;
 }
 
 .search-header {

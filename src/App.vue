@@ -731,7 +731,7 @@ defineExpose({
 <template>
   <div class="app-container">
     <div class="main-layout">
-      <div class="sidebar-container" :style="{ width: sidebarWidth + 'px' }">
+      <div class="sidebar-container" :style="{ width: (sidebarWidth + 48) + 'px' }">
         <Sidebar 
           @file-select="handleFileSelect" 
           :outline="currentOutline"
