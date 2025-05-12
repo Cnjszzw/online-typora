@@ -6,6 +6,7 @@ import hljs from 'highlight.js'
 import 'highlight.js/styles/github.css'
 import MarkdownItContainer from 'markdown-it-container'
 import mermaid from 'mermaid'
+import TabBar from './components/TabBar.vue'
 
 // 初始化mermaid
 onMounted(() => {
@@ -287,6 +288,8 @@ const currentOutline = ref<{ id: string; text: string; level: number; children?:
 const selectedHeading = ref('')
 const isUserClick = ref(false)
 const currentFileName = ref('') // 添加当前文件名状态
+const openTabs = ref<{ name: string; path: string }[]>([])
+const activeTab = ref('')
 
 // 监听markdownContent变化，初始化mermaid图表和代码块功能
 watch(markdownContent, async () => {
@@ -674,7 +677,61 @@ const loadMarkdownContent = async (filePath: string) => {
 // }, { deep: true })
 
 const handleFileSelect = (filePath: string) => {
+  // 统一路径分隔符并提取文件名
+  const normalizedPath = filePath.replace(/\\/g, '/')
+  const fileName = normalizedPath.split('/').pop() || ''
+  
+  console.log('文件选择:', {
+    原始路径: filePath,
+    标准化路径: normalizedPath,
+    提取文件名: fileName
+  })
+  
+  // 检查标签是否已经存在
+  const existingTab = openTabs.value.find(tab => tab.path === filePath)
+  if (!existingTab) {
+    // 如果标签不存在，添加新标签
+    openTabs.value.push({
+      name: fileName,  // 只使用文件名
+      path: filePath   // 保留完整路径用于加载文件
+    })
+    console.log('添加新标签:', {
+      文件名: fileName,
+      完整路径: filePath,
+      当前标签数: openTabs.value.length
+    })
+  }
+  
+  // 设置当前活动标签
+  activeTab.value = filePath
+  
+  // 加载文件内容
   loadMarkdownContent(filePath)
+}
+
+const handleSwitchTab = (path: string) => {
+  activeTab.value = path
+  loadMarkdownContent(path)
+}
+
+const handleCloseTab = (path: string) => {
+  const index = openTabs.value.findIndex(tab => tab.path === path)
+  if (index !== -1) {
+    openTabs.value.splice(index, 1)
+    
+    // 如果关闭的是当前活动标签，切换到最后一个标签
+    if (path === activeTab.value) {
+      const lastTab = openTabs.value[openTabs.value.length - 1]
+      if (lastTab) {
+        activeTab.value = lastTab.path
+        loadMarkdownContent(lastTab.path)
+      } else {
+        // 如果没有标签了，清空内容
+        markdownContent.value = ''
+        activeTab.value = ''
+      }
+    }
+  }
 }
 
 // 暴露给子组件的方法
@@ -744,11 +801,14 @@ defineExpose({
         @mousedown="startResize"
       ></div>
       <div class="content-container">
+        <TabBar 
+          :tabs="openTabs"
+          :activeTab="activeTab"
+          @switch-tab="handleSwitchTab"
+          @close-tab="handleCloseTab"
+        />
         <div class="main-content">
           <div class="markdown-content" v-html="markdownContent"></div>
-          <div class="file-name-display" v-if="currentFileName">
-            {{ currentFileName }}
-          </div>
         </div>
       </div>
     </div>
@@ -845,21 +905,12 @@ html, body {
   flex-direction: column;
   height: 100%;
   min-width: 0;
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
 }
 
 .main-content {
   flex: 1;
   overflow-y: auto;
   width: 100%;
-  height: 100%;
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
   position: relative;
 }
 
