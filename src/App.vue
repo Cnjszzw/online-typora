@@ -1133,7 +1133,7 @@ html, body {
 
 /* 主内容区域滚动条样式 */
 .main-content::-webkit-scrollbar {
-  width: 12px;
+  width: 6px;
   background-color: transparent;
 }
 
