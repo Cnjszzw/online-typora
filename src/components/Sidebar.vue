@@ -103,6 +103,7 @@ interface OutlineItem {
 const props = defineProps<{
   outline: OutlineItem[]
   sidebarWidth?: number
+  selectedFile: string
 }>()
 
 const emit = defineEmits<{
@@ -112,7 +113,6 @@ const emit = defineEmits<{
 
 const activeTab = ref('files')
 const fileTree = ref<FileNode[]>([])
-const selectedFile = ref<string>('')
 const selectedHeading = ref<string>('')
 const isUserClick = ref(false)
 const showBackToTop = ref(false)
@@ -132,6 +132,7 @@ const getStoredScrollPosition = (filePath: string): number => {
 
 // 保存文档位置
 const saveScrollPosition = (filePath: string, position: number) => {
+  console.log('LLog: saveScrollPosition', filePath, position)
   const storedPositions = localStorage.getItem('documentScrollPositions')
   let positions: Record<string, number> = {}
   if (storedPositions) {
@@ -149,28 +150,26 @@ const toggleFolder = (file: FileNode) => {
 }
 
 const handleFileSelect = (path: string) => {
-    // 保存当前文档的位置
-    if (selectedFile.value) {
-      const mainContent = document.querySelector('.main-content')
-      if (mainContent) {
-        saveScrollPosition(selectedFile.value, mainContent.scrollTop)
-      }
+  console.log('LLog: handleFileSelect', path)
+  // 保存当前文档的位置
+  if (props.selectedFile) {
+    const mainContent = document.querySelector('.main-content')
+    if (mainContent) {
+      saveScrollPosition(props.selectedFile, mainContent.scrollTop)
     }
-    
-  selectedFile.value = path
+  }
   emit('file-select', path)
-    
-    // 等待文档加载完成后再恢复位置
-    const checkContentLoaded = () => {
-      const mainContent = document.querySelector('.main-content')
-      if (mainContent && mainContent.scrollHeight > 0) {
+  // 等待文档加载完成后再恢复位置
+  const checkContentLoaded = () => {
+    const mainContent = document.querySelector('.main-content')
+    if (mainContent && mainContent.scrollHeight > 0) {
       const storedPosition = getStoredScrollPosition(path)
-        mainContent.scrollTop = storedPosition
-      } else {
-        setTimeout(checkContentLoaded, 100)
-      }
+      mainContent.scrollTop = storedPosition
+    } else {
+      setTimeout(checkContentLoaded, 100)
     }
-    checkContentLoaded()
+  }
+  checkContentLoaded()
 }
 
 const toggleOutlineItem = (item: OutlineItem) => {
@@ -338,21 +337,24 @@ watch(() => props.outline, (newOutline) => {
 }, { immediate: true })
 
 const checkScroll = () => {
+  console.log('LLog: checkScroll called')
   const mainContent = document.querySelector('.main-content')
-  if (!mainContent) return
-  
+  if (!mainContent) {
+    console.log('LLog: checkScroll no mainContent')
+    return
+  }
   const scrollTop = mainContent.scrollTop
+  console.log('LLog: checkScroll', 'selectedFile:', props.selectedFile, 'scrollTop:', scrollTop)
   // 当向上滚动且滚动距离大于100px时显示按钮
   showBackToTop.value = scrollTop < lastScrollTop && scrollTop > 100
   lastScrollTop = scrollTop
-  
   // 使用防抖保存滚动位置
   if (scrollTimeout) {
     clearTimeout(scrollTimeout)
   }
   scrollTimeout = window.setTimeout(() => {
-    if (selectedFile.value) {
-      saveScrollPosition(selectedFile.value, scrollTop)
+    if (props.selectedFile) {
+      saveScrollPosition(props.selectedFile, scrollTop)
     }
   }, 500) // 500ms 的防抖时间
 }
@@ -375,22 +377,41 @@ const handleExitSearch = () => {
   activeTab.value = 'files'
 }
 
+// 监听selectedFile变化，主动恢复滚动位置
+watch(() => props.selectedFile, (newFile, oldFile) => {
+  if (newFile && newFile !== oldFile) {
+    console.log('LLog: watch selectedFile', newFile, oldFile)
+    const mainContent = document.querySelector('.main-content')
+    if (mainContent) {
+      const storedPosition = getStoredScrollPosition(newFile)
+      mainContent.scrollTop = storedPosition
+      console.log('LLog: restore scrollTop for', newFile, storedPosition)
+    }
+  }
+})
+
 onMounted(() => {
+  console.log('LLog: Sidebar onMounted')
+  window.addEventListener('scroll', () => {
+    console.log('LLog: window scroll')
+  })
   loadFileList()
   setTimeout(initObserver, 100)
-  
   // 添加滚动监听
   const mainContent = document.querySelector('.main-content')
   if (mainContent) {
     mainContent.addEventListener('scroll', checkScroll)
+    console.log('LLog: mainContent scroll listener added')
+  } else {
+    console.log('LLog: mainContent not found in onMounted')
   }
 })
 
 onUnmounted(() => {
-  if (selectedFile.value) {
+  if (props.selectedFile) {
     const mainContent = document.querySelector('.main-content')
     if (mainContent) {
-      saveScrollPosition(selectedFile.value, mainContent.scrollTop)
+      saveScrollPosition(props.selectedFile, mainContent.scrollTop)
     }
   }
   if (scrollTimeout) {

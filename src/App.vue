@@ -1,4 +1,8 @@
 <script lang="ts" setup>
+console.log('LLog: 1234567890-ABCDEFG', Date.now());
+window.alert('LLog: 1234567890-ABCDEFG');
+
+console.log('LLog: App.vue setup loaded')
 import { ref, onMounted, watch, nextTick } from 'vue'
 import Sidebar from './components/Sidebar.vue'
 import MarkdownIt from 'markdown-it'
@@ -677,6 +681,7 @@ const loadMarkdownContent = async (filePath: string) => {
 // }, { deep: true })
 
 const handleFileSelect = (filePath: string) => {
+  console.log('LLog: App handleFileSelect', filePath)
   // 统一路径分隔符并提取文件名
   const normalizedPath = filePath.replace(/\\/g, '/')
   const fileName = normalizedPath.split('/').pop() || ''
@@ -710,6 +715,7 @@ const handleFileSelect = (filePath: string) => {
 }
 
 const handleSwitchTab = (path: string) => {
+  console.log('LLog: App handleSwitchTab', path)
   activeTab.value = path
   loadMarkdownContent(path)
 }
@@ -794,6 +800,7 @@ defineExpose({
           :outline="currentOutline"
           @scroll-to-heading="scrollToHeading"
           :sidebar-width="sidebarWidth"
+          :selected-file="activeTab"
         />
       </div>
       <div 
