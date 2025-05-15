@@ -1120,7 +1120,7 @@ html, body {
 }
 
 .markdown-content pre .code-content-wrapper::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: rgba(0, 0, 0, 0.5);
   border-radius: 0;
   display: block !important;
 }
@@ -1137,7 +1137,7 @@ html, body {
 }
 
 .main-content::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: rgba(0, 0, 0, 0.5);
   border-radius: 0;
 }
 
