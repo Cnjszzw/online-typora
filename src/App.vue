@@ -1,7 +1,4 @@
 <script lang="ts" setup>
-console.log('LLog: 1234567890-ABCDEFG', Date.now());
-window.alert('LLog: 1234567890-ABCDEFG');
-
 console.log('LLog: App.vue setup loaded')
 import { ref, onMounted, watch, nextTick } from 'vue'
 import Sidebar from './components/Sidebar.vue'
@@ -294,6 +291,8 @@ const isUserClick = ref(false)
 const currentFileName = ref('') // 添加当前文件名状态
 const openTabs = ref<{ name: string; path: string }[]>([])
 const activeTab = ref('')
+const sidebarRef = ref()
+const loading = ref(false)
 
 // 监听markdownContent变化，初始化mermaid图表和代码块功能
 watch(markdownContent, async () => {
@@ -304,6 +303,20 @@ watch(markdownContent, async () => {
     initCodeBlocks()
   } catch (error) {
     console.error('Failed to initialize mermaid charts:', error)
+  }
+})
+
+// 监听activeTab和markdownContent，内容渲染后恢复滚动
+watch([activeTab, markdownContent], async ([newTab, newContent], [oldTab, oldContent]) => {
+  if (newTab && newTab !== oldTab) {
+    loading.value = true
+    await nextTick()
+    if (sidebarRef.value && typeof sidebarRef.value.restoreScrollForSelectedFile === 'function') {
+      sidebarRef.value.restoreScrollForSelectedFile()
+    }
+    setTimeout(() => {
+      loading.value = false
+    }, 0)
   }
 })
 
@@ -796,6 +809,7 @@ defineExpose({
     <div class="main-layout">
       <div class="sidebar-container" :style="{ width: (sidebarWidth + 48) + 'px' }">
         <Sidebar 
+          ref="sidebarRef"
           @file-select="handleFileSelect" 
           :outline="currentOutline"
           @scroll-to-heading="scrollToHeading"
@@ -814,8 +828,9 @@ defineExpose({
           @switch-tab="handleSwitchTab"
           @close-tab="handleCloseTab"
         />
-        <div class="main-content">
-          <div class="markdown-content" v-html="markdownContent"></div>
+        <div class="main-content" :key="activeTab">
+          <div v-if="!loading" class="markdown-content" v-html="markdownContent"></div>
+          <div v-else class="loading-mask"></div>
         </div>
       </div>
     </div>
@@ -1373,5 +1388,11 @@ html, body {
 /* 确保文件名显示在滚动条之上 */
 .main-content {
   position: relative;
+}
+
+.loading-mask {
+  width: 100%;
+  height: 100%;
+  background: #fff;
 }
 </style>

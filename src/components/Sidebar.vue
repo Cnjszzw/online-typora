@@ -80,7 +80,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted, watch, onUnmounted } from 'vue'
+import { ref, onMounted, watch, onUnmounted, nextTick, defineExpose } from 'vue'
 import Search from './Search.vue'
 import FileTreeItem from './FileTreeItem.vue'
 import SidebarToolbar from './SidebarToolbar.vue'
@@ -116,6 +116,7 @@ const fileTree = ref<FileNode[]>([])
 const selectedHeading = ref<string>('')
 const isUserClick = ref(false)
 const showBackToTop = ref(false)
+const isRestoringScroll = ref(false)
 let observer: IntersectionObserver | null = null
 let lastScrollTop = 0
 let scrollTimeout: number | null = null
@@ -345,18 +346,21 @@ const checkScroll = () => {
   }
   const scrollTop = mainContent.scrollTop
   console.log('LLog: checkScroll', 'selectedFile:', props.selectedFile, 'scrollTop:', scrollTop)
-  // 当向上滚动且滚动距离大于100px时显示按钮
   showBackToTop.value = scrollTop < lastScrollTop && scrollTop > 100
   lastScrollTop = scrollTop
-  // 使用防抖保存滚动位置
   if (scrollTimeout) {
     clearTimeout(scrollTimeout)
+  }
+  if (isRestoringScroll.value) {
+    // 本次是恢复滚动，不保存，并且重置标志
+    isRestoringScroll.value = false
+    return
   }
   scrollTimeout = window.setTimeout(() => {
     if (props.selectedFile) {
       saveScrollPosition(props.selectedFile, scrollTop)
     }
-  }, 500) // 500ms 的防抖时间
+  }, 500)
 }
 
 const scrollToTop = () => {
@@ -377,18 +381,20 @@ const handleExitSearch = () => {
   activeTab.value = 'files'
 }
 
-// 监听selectedFile变化，主动恢复滚动位置
-watch(() => props.selectedFile, (newFile, oldFile) => {
-  if (newFile && newFile !== oldFile) {
-    console.log('LLog: watch selectedFile', newFile, oldFile)
+function restoreScrollForSelectedFile() {
+  if (props.selectedFile) {
     const mainContent = document.querySelector('.main-content')
     if (mainContent) {
-      const storedPosition = getStoredScrollPosition(newFile)
+      const storedPosition = getStoredScrollPosition(props.selectedFile)
+      isRestoringScroll.value = true
       mainContent.scrollTop = storedPosition
-      console.log('LLog: restore scrollTop for', newFile, storedPosition)
+      console.log('LLog: restore scrollTop for', props.selectedFile, storedPosition)
+      // 不再用setTimeout关闭，等用户主动滚动时再关闭
     }
   }
-})
+}
+
+defineExpose({ restoreScrollForSelectedFile })
 
 onMounted(() => {
   console.log('LLog: Sidebar onMounted')
