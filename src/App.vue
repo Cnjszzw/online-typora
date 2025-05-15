@@ -1127,7 +1127,7 @@ html, body {
 }
 
 .markdown-content pre .code-content-wrapper::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: rgba(0, 0, 0, 0.5);
   border-radius: 0;
   display: block !important;
 }
@@ -1139,12 +1139,12 @@ html, body {
 
 /* 主内容区域滚动条样式 */
 .main-content::-webkit-scrollbar {
-  width: 6px;
+  width: 12px;
   background-color: transparent;
 }
 
 .main-content::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: rgba(0, 0, 0, 0.5);
   border-radius: 0;
 }
 

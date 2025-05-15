@@ -549,7 +549,7 @@ onUnmounted(() => {
 }
 
 .file-tree::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: rgba(0, 0, 0, 0.5);
   border-radius: 0;
 }
 
@@ -609,7 +609,7 @@ onUnmounted(() => {
 }
 
 .outline::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: rgba(0, 0, 0, 0.5);
   border-radius: 0;
 }
 
