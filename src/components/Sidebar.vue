@@ -157,20 +157,11 @@ const handleFileSelect = (path: string) => {
     const mainContent = document.querySelector('.main-content')
     if (mainContent) {
       saveScrollPosition(props.selectedFile, mainContent.scrollTop)
+      // 立即将当前内容区域滚动到顶部，避免闪烁
+      mainContent.scrollTop = 0
     }
   }
   emit('file-select', path)
-  // 等待文档加载完成后再恢复位置
-  const checkContentLoaded = () => {
-    const mainContent = document.querySelector('.main-content')
-    if (mainContent && mainContent.scrollHeight > 0) {
-      const storedPosition = getStoredScrollPosition(path)
-      mainContent.scrollTop = storedPosition
-    } else {
-      setTimeout(checkContentLoaded, 100)
-    }
-  }
-  checkContentLoaded()
 }
 
 const toggleOutlineItem = (item: OutlineItem) => {
@@ -385,11 +376,18 @@ function restoreScrollForSelectedFile() {
   if (props.selectedFile) {
     const mainContent = document.querySelector('.main-content')
     if (mainContent) {
-      const storedPosition = getStoredScrollPosition(props.selectedFile)
-      isRestoringScroll.value = true
-      mainContent.scrollTop = storedPosition
-      console.log('LLog: restore scrollTop for', props.selectedFile, storedPosition)
-      // 不再用setTimeout关闭，等用户主动滚动时再关闭
+      // 等待内容完全加载后再恢复滚动位置
+      const checkContentLoaded = () => {
+        if (mainContent.scrollHeight > 0) {
+          const storedPosition = getStoredScrollPosition(props.selectedFile)
+          isRestoringScroll.value = true
+          mainContent.scrollTop = storedPosition
+          console.log('LLog: restore scrollTop for', props.selectedFile, storedPosition)
+        } else {
+          setTimeout(checkContentLoaded, 50)
+        }
+      }
+      checkContentLoaded()
     }
   }
 }

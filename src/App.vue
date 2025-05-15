@@ -289,7 +289,7 @@ const currentOutline = ref<{ id: string; text: string; level: number; children?:
 const selectedHeading = ref('')
 const isUserClick = ref(false)
 const currentFileName = ref('') // 添加当前文件名状态
-const openTabs = ref<{ name: string; path: string }[]>([])
+const openTabs = ref<{ name: string; path: string; content: string }[]>([])
 const activeTab = ref('')
 const sidebarRef = ref()
 
@@ -535,35 +535,123 @@ const initCodeBlocks = () => {
   })
 }
 
+const handleFileSelect = async (filePath: string) => {
+  console.log('LLog: App handleFileSelect', filePath)
+  const normalizedPath = filePath.replace(/\\/g, '/')
+  const fileName = normalizedPath.split('/').pop() || ''
+  let tab = openTabs.value.find(tab => tab.path === filePath)
+  if (!tab) {
+    tab = { name: fileName, path: filePath, content: '' }
+    openTabs.value.push(tab)
+    console.log('添加新标签:', {
+      文件名: fileName,
+      完整路径: filePath,
+      当前标签数: openTabs.value.length
+    })
+  }
+  activeTab.value = filePath
+  if (!tab.content) {
+    tab.content = await loadMarkdownContent(filePath)
+  }
+}
+
+const handleSwitchTab = async (path: string) => {
+  console.log('LLog: App handleSwitchTab', path)
+  activeTab.value = path
+  const tab = openTabs.value.find(tab => tab.path === path)
+  if (tab && !tab.content) {
+    tab.content = await loadMarkdownContent(path)
+  }
+}
+
+const handleCloseTab = (path: string) => {
+  const index = openTabs.value.findIndex(tab => tab.path === path)
+  if (index !== -1) {
+    openTabs.value.splice(index, 1)
+    
+    // 如果关闭的是当前活动标签，切换到最后一个标签
+    if (path === activeTab.value) {
+      const lastTab = openTabs.value[openTabs.value.length - 1]
+      if (lastTab) {
+        activeTab.value = lastTab.path
+        loadMarkdownContent(lastTab.path)
+      } else {
+        // 如果没有标签了，清空内容
+        markdownContent.value = ''
+        activeTab.value = ''
+      }
+    }
+  }
+}
+
+// 暴露给子组件的方法
+const scrollToHeading = (id: string) => {
+  isUserClick.value = true // 标记为用户点击
+  const heading = document.getElementById(id)
+  if (heading) {
+    const mainContent = document.querySelector('.main-content')
+    if (mainContent) {
+      // 添加一个小的偏移量，使标题位置稍微偏下一点
+      const offset = 10
+      mainContent.scrollTop = heading.offsetTop - offset
+      selectedHeading.value = id
+    }
+  }
+  // 1秒后重置用户点击标记
+  setTimeout(() => {
+    isUserClick.value = false
+  }, 1000)
+}
+
+// 添加侧边栏宽度控制
+const sidebarWidth = ref(300)
+let isResizing = false
+let startX = 0
+let startWidth = 0
+
+const startResize = (e: MouseEvent) => {
+  isResizing = true
+  startX = e.clientX
+  startWidth = sidebarWidth.value
+  document.addEventListener('mousemove', handleResize)
+  document.addEventListener('mouseup', stopResize)
+}
+
+const handleResize = (e: MouseEvent) => {
+  if (!isResizing) return
+  const delta = e.clientX - startX
+  const newWidth = Math.max(150, Math.min(600, startWidth + delta))
+  sidebarWidth.value = newWidth
+}
+
+const stopResize = () => {
+  isResizing = false
+  document.removeEventListener('mousemove', handleResize)
+  document.removeEventListener('mouseup', stopResize)
+}
+
+defineExpose({
+  scrollToHeading
+})
+
 const loadMarkdownContent = async (filePath: string) => {
   try {
     console.log('开始加载文件:', filePath)
-    // 从文件路径中提取文件名
     currentFileName.value = filePath.split('/').pop() || ''
-    
     const response = await fetch(filePath)
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)
     }
     const content = await response.text()
-    
-    // 获取当前文件的目录路径
-    // 1. 移除开头的 /online-typora/docs/ 或 /docs/
-    const cleanPath = filePath.replace(/^\/?(online-typora\/)?docs\//, '')
-                             .replace(/\\/g, '/') // 统一使用正斜杠
-    // 2. 获取目录部分
+    const cleanPath = filePath.replace(/^\/?(online-typora\/)?docs\//, '').replace(/\\/g, '/')
     currentDir.value = cleanPath.substring(0, cleanPath.lastIndexOf('/'))
-    
     console.log('当前文件目录路径处理:', {
       原始路径: filePath,
       清理后路径: cleanPath,
       最终目录: currentDir.value
     })
-    
     const renderedContent = md.render(content)
     markdownContent.value = renderedContent
-    
-    // 等待DOM更新后获取标题元素
     setTimeout(() => {
       const headings = document.querySelectorAll('.markdown-heading')
       headingRefs.value.clear()
@@ -676,127 +764,14 @@ const loadMarkdownContent = async (filePath: string) => {
       mainContent.dispatchEvent(new Event('scroll'))
       
     }, 0)
+    return renderedContent
   } catch (error) {
     console.error('Error loading markdown file:', error)
     markdownContent.value = '加载文件失败'
-    currentFileName.value = '' // 加载失败时清空文件名
+    currentFileName.value = ''
+    return '加载文件失败'
   }
 }
-
-// 移除大纲变化的监听
-// watch(() => currentOutline.value, (newOutline) => {
-//   console.log('大纲数据更新:', newOutline)
-// }, { deep: true })
-
-const handleFileSelect = (filePath: string) => {
-  console.log('LLog: App handleFileSelect', filePath)
-  // 统一路径分隔符并提取文件名
-  const normalizedPath = filePath.replace(/\\/g, '/')
-  const fileName = normalizedPath.split('/').pop() || ''
-  
-  console.log('文件选择:', {
-    原始路径: filePath,
-    标准化路径: normalizedPath,
-    提取文件名: fileName
-  })
-  
-  // 检查标签是否已经存在
-  const existingTab = openTabs.value.find(tab => tab.path === filePath)
-  if (!existingTab) {
-    // 如果标签不存在，添加新标签
-    openTabs.value.push({
-      name: fileName,  // 只使用文件名
-      path: filePath   // 保留完整路径用于加载文件
-    })
-    console.log('添加新标签:', {
-      文件名: fileName,
-      完整路径: filePath,
-      当前标签数: openTabs.value.length
-    })
-  }
-  
-  // 设置当前活动标签
-  activeTab.value = filePath
-  
-  // 加载文件内容
-  loadMarkdownContent(filePath)
-}
-
-const handleSwitchTab = (path: string) => {
-  console.log('LLog: App handleSwitchTab', path)
-  activeTab.value = path
-  loadMarkdownContent(path)
-}
-
-const handleCloseTab = (path: string) => {
-  const index = openTabs.value.findIndex(tab => tab.path === path)
-  if (index !== -1) {
-    openTabs.value.splice(index, 1)
-    
-    // 如果关闭的是当前活动标签，切换到最后一个标签
-    if (path === activeTab.value) {
-      const lastTab = openTabs.value[openTabs.value.length - 1]
-      if (lastTab) {
-        activeTab.value = lastTab.path
-        loadMarkdownContent(lastTab.path)
-      } else {
-        // 如果没有标签了，清空内容
-        markdownContent.value = ''
-        activeTab.value = ''
-      }
-    }
-  }
-}
-
-// 暴露给子组件的方法
-const scrollToHeading = (id: string) => {
-  isUserClick.value = true // 标记为用户点击
-  const heading = document.getElementById(id)
-  if (heading) {
-    const mainContent = document.querySelector('.main-content')
-    if (mainContent) {
-      // 添加一个小的偏移量，使标题位置稍微偏下一点
-      const offset = 10
-      mainContent.scrollTop = heading.offsetTop - offset
-      selectedHeading.value = id
-    }
-  }
-  // 1秒后重置用户点击标记
-  setTimeout(() => {
-    isUserClick.value = false
-  }, 1000)
-}
-
-// 添加侧边栏宽度控制
-const sidebarWidth = ref(300)
-let isResizing = false
-let startX = 0
-let startWidth = 0
-
-const startResize = (e: MouseEvent) => {
-  isResizing = true
-  startX = e.clientX
-  startWidth = sidebarWidth.value
-  document.addEventListener('mousemove', handleResize)
-  document.addEventListener('mouseup', stopResize)
-}
-
-const handleResize = (e: MouseEvent) => {
-  if (!isResizing) return
-  const delta = e.clientX - startX
-  const newWidth = Math.max(150, Math.min(600, startWidth + delta))
-  sidebarWidth.value = newWidth
-}
-
-const stopResize = () => {
-  isResizing = false
-  document.removeEventListener('mousemove', handleResize)
-  document.removeEventListener('mouseup', stopResize)
-}
-
-defineExpose({
-  scrollToHeading
-})
 </script>
 
 <template>
@@ -824,7 +799,17 @@ defineExpose({
           @close-tab="handleCloseTab"
         />
         <div class="main-content">
-          <div class="markdown-content" v-html="markdownContent" :key="activeTab"></div>
+          <keep-alive>
+            <div 
+              v-for="tab in openTabs" 
+              :key="tab.path"
+              class="content"
+              :class="{ 'active': activeTab === tab.path }"
+              v-show="activeTab === tab.path"
+            >
+              <div class="markdown-content" v-html="tab.content" :key="tab.path"></div>
+            </div>
+          </keep-alive>
         </div>
       </div>
     </div>
