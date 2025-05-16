@@ -306,7 +306,7 @@ watch(markdownContent, async () => {
 })
 
 // 监听activeTab和markdownContent，内容渲染后恢复滚动
-watch([activeTab, markdownContent], async ([newTab, _], [oldTab]) => {
+watch([activeTab, markdownContent], async ([newTab, newContent], [oldTab, oldContent]) => {
   if (newTab && newTab !== oldTab) {
     await nextTick()
     if (sidebarRef.value && typeof sidebarRef.value.restoreScrollForSelectedFile === 'function') {

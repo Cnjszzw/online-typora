@@ -80,7 +80,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted, watch, onUnmounted, defineExpose } from 'vue'
+import { ref, onMounted, watch, onUnmounted, nextTick, defineExpose } from 'vue'
 import Search from './Search.vue'
 import FileTreeItem from './FileTreeItem.vue'
 import SidebarToolbar from './SidebarToolbar.vue'
