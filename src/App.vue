@@ -837,12 +837,14 @@ const checkScroll = () => {
   }
   
   if (isRestoringScroll.value) {
+    console.log('CP001: 正在恢复滚动位置，跳过更新选中标题')
     isRestoringScroll.value = false
     return
   }
 
   // 如果是用户点击导致的滚动，不更新选中标题
   if (isUserClick.value) {
+    console.log('CP001: 用户点击导致的滚动，跳过更新选中标题')
     return
   }
   
@@ -854,24 +856,68 @@ const checkScroll = () => {
   const viewportBottom = viewportTop + mainContent.clientHeight
   const scrollOffset = 20 // 减小偏移量，使选中更精确
 
+  console.log('CP001: 开始检查滚动位置', {
+    viewportTop,
+    viewportBottom,
+    scrollOffset,
+    headingsCount: headings.length,
+    currentSelectedHeading: selectedHeading.value
+  })
+
   // 遍历所有标题，找到当前视口中最接近顶部的标题
-  headings.forEach(heading => {
+  headings.forEach((heading: Element) => {
     if (!(heading instanceof HTMLElement)) return
     
     const rect = heading.getBoundingClientRect()
     const headingTop = rect.top + mainContent.scrollTop
+    const headingBottom = headingTop + rect.height
     const distance = Math.abs(headingTop - (viewportTop + scrollOffset))
+    const headingId = heading.getAttribute('id') || ''
+    
+    console.log('CP001: 检查标题', {
+      id: headingId,
+      headingTop,
+      headingBottom,
+      distance,
+      minDistance,
+      isInViewport: headingTop <= viewportBottom && headingBottom >= viewportTop,
+      rectTop: rect.top,
+      scrollTop: mainContent.scrollTop
+    })
     
     // 如果标题在视口内或接近视口顶部，且距离更近，则更新当前标题
-    if (headingTop <= viewportBottom && distance < minDistance) {
+    if (headingTop <= viewportBottom && headingBottom >= viewportTop && distance < minDistance) {
       minDistance = distance
       currentHeading = heading
+      console.log('CP001: 更新当前选中标题', {
+        id: headingId,
+        distance,
+        rectTop: rect.top,
+        scrollTop: mainContent.scrollTop
+      })
     }
   })
 
   // 更新选中的标题
-  if (currentHeading && currentHeading.id) {
-    selectedHeading.value = currentHeading.id
+  if (currentHeading) {
+    const newHeadingId = currentHeading.getAttribute('id') || ''
+    if (selectedHeading.value !== newHeadingId) {
+      console.log('CP001: 设置新的选中标题', {
+        oldId: selectedHeading.value,
+        newId: newHeadingId,
+        rectTop: currentHeading.getBoundingClientRect().top,
+        scrollTop: mainContent.scrollTop
+      })
+      selectedHeading.value = newHeadingId
+      
+      // 确保 Sidebar 组件收到更新
+      nextTick(() => {
+        if (sidebarRef.value) {
+          console.log('CP001: 通知 Sidebar 更新选中标题', newHeadingId)
+          sidebarRef.value.updateSelectedHeading(newHeadingId)
+        }
+      })
+    }
   }
   
   scrollTimeout = window.setTimeout(() => {
@@ -887,11 +933,30 @@ const checkScroll = () => {
   }, 500)
 }
 
+// 添加节流函数
+const throttle = (fn: Function, delay: number) => {
+  let lastCall = 0
+  return function (...args: any[]) {
+    const now = Date.now()
+    if (now - lastCall >= delay) {
+      lastCall = now
+      return fn(...args)
+    }
+  }
+}
+
 // 在组件挂载时添加滚动监听
 onMounted(() => {
   const mainContent = document.querySelector('.main-content')
   if (mainContent) {
-    mainContent.addEventListener('scroll', checkScroll)
+    // 使用节流函数包装 checkScroll
+    const throttledCheckScroll = throttle(checkScroll, 100)
+    mainContent.addEventListener('scroll', throttledCheckScroll)
+    
+    // 初始检查一次
+    nextTick(() => {
+      checkScroll()
+    })
   }
 })
 

@@ -298,7 +298,16 @@ const resetOutlineState = () => {
   }
 }
 
-defineExpose({ restoreScrollForSelectedFile })
+// 添加更新选中标题的方法
+const updateSelectedHeading = (id: string) => {
+  console.log('CP001: Sidebar 收到更新选中标题请求', id)
+  selectedHeading.value = id
+}
+
+defineExpose({ 
+  restoreScrollForSelectedFile,
+  updateSelectedHeading
+})
 
 onMounted(() => {
   console.log('DG2: Component mounted, activeTab:', activeTab.value)
