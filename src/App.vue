@@ -624,6 +624,10 @@ const handleSwitchTab = async (path: string) => {
     nextTick(() => {
       if (sidebarRef.value) {
         sidebarRef.value.restoreScrollForSelectedFile()
+        // 重置选中状态
+        selectedHeading.value = ''
+        // 触发一次滚动检查
+        checkScroll()
       }
     })
   }
@@ -863,6 +867,28 @@ const checkScroll = () => {
     headingsCount: headings.length,
     currentSelectedHeading: selectedHeading.value
   })
+
+  // 首先检查当前选中的标题是否还在视口内
+  if (selectedHeading.value) {
+    const currentSelectedElement = document.getElementById(selectedHeading.value)
+    if (currentSelectedElement) {
+      const rect = currentSelectedElement.getBoundingClientRect()
+      const headingTop = rect.top + mainContent.scrollTop
+      const headingBottom = headingTop + rect.height
+      
+      // 如果当前选中的标题还在视口内，保持选中状态
+      if (headingTop <= viewportBottom && headingBottom >= viewportTop) {
+        console.log('CP001: 当前选中标题仍在视口内，保持选中状态', {
+          id: selectedHeading.value,
+          headingTop,
+          headingBottom,
+          viewportTop,
+          viewportBottom
+        })
+        return
+      }
+    }
+  }
 
   // 遍历所有标题，找到当前视口中最接近顶部的标题
   headings.forEach((heading: Element) => {
