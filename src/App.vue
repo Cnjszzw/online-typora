@@ -289,7 +289,7 @@ const currentOutline = ref<{ id: string; text: string; level: number; children?:
 const selectedHeading = ref('')
 const isUserClick = ref(false)
 const currentFileName = ref('') // 添加当前文件名状态
-const openTabs = ref<{ name: string; path: string; content: string }[]>([])
+const openTabs = ref<{ name: string; path: string; content: string; outline?: { id: string; text: string; level: number; children?: any[] }[] }[]>([])
 const activeTab = ref('')
 const sidebarRef = ref()
 
@@ -541,7 +541,7 @@ const handleFileSelect = async (filePath: string) => {
   const fileName = normalizedPath.split('/').pop() || ''
   let tab = openTabs.value.find(tab => tab.path === filePath)
   if (!tab) {
-    tab = { name: fileName, path: filePath, content: '' }
+    tab = { name: fileName, path: filePath, content: '', outline: [] }
     openTabs.value.push(tab)
     console.log('添加新标签:', {
       文件名: fileName,
@@ -556,11 +556,71 @@ const handleFileSelect = async (filePath: string) => {
 }
 
 const handleSwitchTab = async (path: string) => {
-  console.log('LLog: App handleSwitchTab', path)
+  console.log('DG2: Switching tab to:', path)
+  const oldTab = activeTab.value
   activeTab.value = path
-  const tab = openTabs.value.find(tab => tab.path === path)
-  if (tab && !tab.content) {
-    tab.content = await loadMarkdownContent(path)
+  const tab = openTabs.value.find(t => t.path === path)
+  if (tab) {
+    console.log('DG2: Found tab, loading content')
+    if (!tab.content) {
+      await loadMarkdownContent(tab.path)
+    } else {
+      // 切换标签时更新当前大纲和内容
+      console.log('DG2: Updating outline for tab:', tab.name)
+      markdownContent.value = tab.content
+      
+      // 创建一个临时的内容容器来重新解析大纲
+      const tempContainer = document.createElement('div')
+      tempContainer.innerHTML = tab.content
+      const headings = tempContainer.querySelectorAll('.markdown-heading')
+      console.log('DG2: Found headings:', headings.length)
+      
+      // 构建新的大纲数据
+      const outline: any[] = []
+      const parentStack: any[] = []
+      
+      headings.forEach(heading => {
+        const id = heading.id
+        const text = heading.textContent || ''
+        const level = parseInt(heading.tagName[1])
+        
+        const item = {
+          id,
+          text,
+          level,
+          children: [],
+          isExpanded: true
+        }
+        
+        while (parentStack.length > 0 && level <= parentStack[parentStack.length - 1].level) {
+          parentStack.pop()
+        }
+        
+        if (parentStack.length > 0) {
+          parentStack[parentStack.length - 1].children.push(item)
+        } else {
+          outline.push(item)
+        }
+        
+        if (level < 6) {
+          parentStack.push(item)
+        }
+      })
+      
+      // 更新大纲数据
+      tab.outline = outline
+      currentOutline.value = outline
+      
+      // 清理临时容器
+      tempContainer.remove()
+    }
+    
+    // 确保大纲更新
+    nextTick(() => {
+      if (sidebarRef.value) {
+        sidebarRef.value.restoreScrollForSelectedFile()
+      }
+    })
   }
 }
 
@@ -636,7 +696,7 @@ defineExpose({
 
 const loadMarkdownContent = async (filePath: string) => {
   try {
-    console.log('开始加载文件:', filePath)
+    console.log('DG2: 开始加载文件:', filePath)
     currentFileName.value = filePath.split('/').pop() || ''
     const response = await fetch(filePath)
     if (!response.ok) {
@@ -645,130 +705,97 @@ const loadMarkdownContent = async (filePath: string) => {
     const content = await response.text()
     const cleanPath = filePath.replace(/^\/?(online-typora\/)?docs\//, '').replace(/\\/g, '/')
     currentDir.value = cleanPath.substring(0, cleanPath.lastIndexOf('/'))
-    console.log('当前文件目录路径处理:', {
+    console.log('DG2: 当前文件目录路径处理:', {
       原始路径: filePath,
       清理后路径: cleanPath,
       最终目录: currentDir.value
     })
     const renderedContent = md.render(content)
     markdownContent.value = renderedContent
-    setTimeout(() => {
-      const headings = document.querySelectorAll('.markdown-heading')
-      headingRefs.value.clear()
+
+    // 更新标签页内容
+    const tabIndex = openTabs.value.findIndex(tab => tab.path === filePath)
+    if (tabIndex !== -1) {
+      openTabs.value[tabIndex].content = renderedContent
+    }
+
+    // 等待DOM更新后处理大纲
+    await nextTick()
+    
+    // 创建一个临时的内容容器
+    const tempContainer = document.createElement('div')
+    tempContainer.innerHTML = renderedContent
+    
+    console.log('DG2: 开始处理大纲数据')
+    const headings = tempContainer.querySelectorAll('.markdown-heading')
+    headingRefs.value.clear()
+    
+    console.log('DG2: 找到标题数量:', headings.length)
+    
+    // 构建层级结构的大纲
+    const outline: any[] = []
+    const parentStack: any[] = []
+    
+    headings.forEach(heading => {
+      const id = heading.id
+      const text = heading.textContent || ''
+      const level = parseInt(heading.tagName[1])
       
-      const mainContent = document.querySelector('.main-content')
-      if (!mainContent) {
-        console.error('找不到 main-content 元素')
-        return
+      console.log('DG2: 处理标题:', { id, text, level })
+      
+      const item = {
+        id,
+        text,
+        level,
+        children: [],
+        isExpanded: true
       }
       
-      // 存储所有标题的位置信息
-      const headingPositions = Array.from(headings).map(heading => ({
-        element: heading as HTMLElement,
-        id: heading.id,
-        top: (heading as HTMLElement).offsetTop
-      })).sort((a, b) => a.top - b.top)
+      // 重置到正确的层级
+      while (parentStack.length > 0 && level <= parentStack[parentStack.length - 1].level) {
+        parentStack.pop()
+      }
       
-      // 构建层级结构的大纲
-      const outline: any[] = []
-      const parentStack: any[] = []
+      if (parentStack.length > 0) {
+        // 添加到当前父级的子级
+        parentStack[parentStack.length - 1].children.push(item)
+      } else {
+        // 顶级标题
+        outline.push(item)
+      }
       
-      headings.forEach(heading => {
-        const id = heading.id
-        const text = heading.textContent || ''
-        const level = parseInt(heading.tagName[1])
-        
-        const item = {
-          id,
-          text,
-          level,
-          children: [],
-          isExpanded: true
-        }
-        
-        // 重置到正确的层级
-        while (parentStack.length > 0 && level <= parentStack[parentStack.length - 1].level) {
-          parentStack.pop()
-        }
-        
-        if (parentStack.length > 0) {
-          // 添加到当前父级的子级
-          parentStack[parentStack.length - 1].children.push(item)
-        } else {
-          // 顶级标题
-          outline.push(item)
-        }
-        
-        if (level < 6) { // 只处理到 h5
-          parentStack.push(item)
-        }
-      })
-      
-      currentOutline.value = outline
-      
-      // 添加滚动监听
-      mainContent.addEventListener('scroll', () => {
-        // 如果是用户点击触发的滚动，不更新选中状态
-        if (isUserClick.value) return
-        
-        const scrollTop = mainContent.scrollTop
-        const viewportHeight = mainContent.clientHeight
-        const scrollBottom = scrollTop + viewportHeight
-        
-        // 计算视口中心位置
-        const viewportCenter = scrollTop + viewportHeight / 2
-        
-        // 找到最接近视口中心的标题
-        let closestHeading = null
-        let minDistance = Infinity
-        
-        headingPositions.forEach(heading => {
-          // 计算标题到视口中心的距离
-          const distance = Math.abs(heading.top - viewportCenter)
-          
-          // 如果标题在视口内或接近视口
-          if (heading.top <= scrollBottom && heading.top + 50 >= scrollTop) {
-            if (distance < minDistance) {
-              minDistance = distance
-              closestHeading = heading
-            }
-          }
-        })
-        
-        // 处理边界情况
-        if (!closestHeading && headingPositions.length > 0) {
-          if (scrollTop <= 0) {
-            // 滚动到顶部时选中第一个标题
-            closestHeading = headingPositions[0]
-          } else if (scrollBottom >= mainContent.scrollHeight) {
-            // 滚动到底部时选中最后一个标题
-            closestHeading = headingPositions[headingPositions.length - 1]
-          } else {
-            // 在中间区域时，找到最接近视口中心的标题
-            headingPositions.forEach(heading => {
-              const distance = Math.abs(heading.top - viewportCenter)
-              if (distance < minDistance) {
-                minDistance = distance
-                closestHeading = heading
-              }
-            })
-          }
-        }
-        
-        if (closestHeading && closestHeading.id) {
-          selectedHeading.value = closestHeading.id
-        }
-      })
-      
-      // 初始检查
-      mainContent.dispatchEvent(new Event('scroll'))
-      
-    }, 0)
+      if (level < 6) { // 只处理到 h5
+        parentStack.push(item)
+      }
+    })
+    
+    console.log('DG2: 生成大纲数据:', outline)
+
+    // 保存大纲数据到对应的标签页
+    if (tabIndex !== -1) {
+      openTabs.value[tabIndex].outline = outline
+      // 只有当前活动标签才更新 currentOutline
+      if (activeTab.value === filePath) {
+        currentOutline.value = outline
+      }
+    }
+    
+    // 清理临时容器
+    tempContainer.remove()
+    
     return renderedContent
   } catch (error) {
-    console.error('Error loading markdown file:', error)
+    console.error('DG2: Error loading markdown file:', error)
     markdownContent.value = '加载文件失败'
     currentFileName.value = ''
+    // 清空当前标签页的大纲
+    const tabIndex = openTabs.value.findIndex(tab => tab.path === filePath)
+    if (tabIndex !== -1) {
+      openTabs.value[tabIndex].outline = []
+    }
+    if (activeTab.value === filePath) {
+      currentOutline.value = []
+    }
     return '加载文件失败'
   }
 }

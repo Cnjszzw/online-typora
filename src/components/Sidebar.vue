@@ -21,43 +21,12 @@
         
         <div v-else class="outline">
           <template v-if="outline.length > 0">
-            <template v-for="item in outline" :key="item.id">
-              <div class="outline-item" :class="{ 'is-selected': selectedHeading === item.id }">
-                <span v-if="item.children && item.children.length > 0" 
-                      class="arrow-icon" 
-                      :class="{ expanded: item.isExpanded }" 
-                      @click.stop="toggleOutlineItem(item)">
-                  <img src="/arrow-next-small-svgrepo-com.svg" alt="arrow" />
-                </span>
-                <div class="outline-name" @click="handleHeadingClick(item.id)">
-                  <span class="outline-text">{{ item.text }}</span>
-                </div>
-              </div>
-              <div v-if="item.children && item.isExpanded" class="children">
-                <template v-for="child in item.children" :key="child.id">
-                  <div class="outline-item" :class="{ 'is-selected': selectedHeading === child.id }">
-                    <span v-if="child.children && child.children.length > 0" 
-                          class="arrow-icon" 
-                          :class="{ expanded: child.isExpanded }" 
-                          @click.stop="toggleOutlineItem(child)">
-                      <img src="/arrow-next-small-svgrepo-com.svg" alt="arrow" />
-                    </span>
-                    <div class="outline-name" @click="handleHeadingClick(child.id)">
-                      <span class="outline-text">{{ child.text }}</span>
-                    </div>
-                  </div>
-                  <div v-if="child.children && child.isExpanded" class="children">
-                    <template v-for="grandChild in child.children" :key="grandChild.id">
-                      <div class="outline-item" :class="{ 'is-selected': selectedHeading === grandChild.id }">
-                        <div class="outline-name" @click="handleHeadingClick(grandChild.id)">
-                          <span class="outline-text">{{ grandChild.text }}</span>
-                        </div>
-                      </div>
-                    </template>
-                  </div>
-                </template>
-              </div>
-            </template>
+            <OutlineTreeItem
+              :outline="outline"
+              :selected-heading="selectedHeading"
+              @heading-click="handleHeadingClick"
+              @toggle-item="toggleOutlineItem"
+            />
           </template>
           <div v-else class="empty-outline">
             当前文件没有大纲
@@ -78,9 +47,10 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted, watch, onUnmounted, nextTick, defineExpose } from 'vue'
+import { ref, onMounted, watch, onUnmounted, nextTick } from 'vue'
 import Search from './Search.vue'
 import FileTreeItem from './FileTreeItem.vue'
+import OutlineTreeItem from './OutlineTreeItem.vue'
 import SidebarToolbar from './SidebarToolbar.vue'
 
 interface FileNode {
@@ -112,12 +82,11 @@ const emit = defineEmits<{
 const activeTab = ref('files')
 const fileTree = ref<FileNode[]>([])
 const selectedHeading = ref<string>('')
-const isUserClick = ref(false)
 const showBackToTop = ref(false)
 const isRestoringScroll = ref(false)
-let observer: IntersectionObserver | null = null
 let lastScrollTop = 0
 let scrollTimeout: number | null = null
+let isResetting = false
 
 // 获取存储的文档位置
 const getStoredScrollPosition = (filePath: string): number => {
@@ -131,7 +100,6 @@ const getStoredScrollPosition = (filePath: string): number => {
 
 // 保存文档位置
 const saveScrollPosition = (filePath: string, position: number) => {
-  console.log('LLog: saveScrollPosition', filePath, position)
   const storedPositions = localStorage.getItem('documentScrollPositions')
   let positions: Record<string, number> = {}
   if (storedPositions) {
@@ -141,154 +109,36 @@ const saveScrollPosition = (filePath: string, position: number) => {
   localStorage.setItem('documentScrollPositions', JSON.stringify(positions))
 }
 
-// @ts-ignore - Used in template
-const toggleFolder = (file: FileNode) => {
-  if (file.children) {
-    file.isExpanded = !file.isExpanded
-  }
-}
-
 const handleFileSelect = (path: string) => {
-  console.log('LLog: handleFileSelect', path)
-  // 保存当前文档的位置
   if (props.selectedFile) {
     const mainContent = document.querySelector('.main-content')
     if (mainContent) {
       saveScrollPosition(props.selectedFile, mainContent.scrollTop)
-      // 立即将当前内容区域滚动到顶部，避免闪烁
       mainContent.scrollTop = 0
     }
   }
   emit('file-select', path)
 }
 
+const handleHeadingClick = (id: string) => {
+  console.log('DG2: Heading clicked:', id)
+  selectedHeading.value = id
+  emit('scroll-to-heading', id)
+}
+
 const toggleOutlineItem = (item: OutlineItem) => {
+  console.log('DG2: Toggle outline item:', {
+    id: item.id,
+    text: item.text,
+    wasExpanded: item.isExpanded
+  })
   if (item.children) {
     item.isExpanded = !item.isExpanded
   }
 }
 
-const handleHeadingClick = (id: string) => {
-  isUserClick.value = true
-  selectedHeading.value = id
-  emit('scroll-to-heading', id)
-  
-  setTimeout(() => {
-    isUserClick.value = false
-  }, 1000)
-}
-
-const findOutlineItem = (id: string): OutlineItem | null => {
-  const find = (items: OutlineItem[]): OutlineItem | null => {
-    for (const item of items) {
-      if (item.id === id) return item
-      if (item.children) {
-        const found = find(item.children)
-        if (found) return found
-      }
-    }
-    return null
-  }
-  return find(props.outline)
-}
-
-const findParentOutlineItem = (id: string): OutlineItem | null => {
-  const find = (items: OutlineItem[], targetId: string): OutlineItem | null => {
-    for (const item of items) {
-      if (item.children) {
-        for (const child of item.children) {
-          if (child.id === targetId) {
-            return item
-          }
-          if (child.children) {
-            const found = find([child], targetId)
-            if (found) return found
-          }
-        }
-      }
-    }
-    return null
-  }
-  return find(props.outline, id)
-}
-
-const initObserver = () => {
-  if (observer) observer.disconnect()
-  
-  const mainContent = document.querySelector('.main-content')
-  if (!mainContent) return
-  
-  mainContent.removeEventListener('scroll', handleScroll)
-  
-  mainContent.addEventListener('scroll', handleScroll)
-  
-  handleScroll()
-}
-
-const handleScroll = () => {
-  if (isUserClick.value) return
-  
-  const mainContent = document.querySelector('.main-content')
-  if (!mainContent) return
-  
-  const viewportTop = mainContent.scrollTop
-  const viewportHeight = mainContent.clientHeight
-  const viewportCenter = viewportTop + viewportHeight / 2
-  
-  const headings = Array.from(document.querySelectorAll('h1, h2, h3, h4, h5, h6'))
-    .map(heading => ({
-      element: heading as HTMLElement,
-      level: parseInt(heading.tagName[1]),
-      top: (heading as HTMLElement).getBoundingClientRect().top + viewportTop
-    }))
-    .sort((a, b) => a.top - b.top)
-  
-  if (headings.length === 0) return
-  
-  if (viewportTop <= 0) {
-    const firstHeading = headings[0]
-    if (firstHeading.element.id) {
-      selectedHeading.value = firstHeading.element.id
-      return
-    }
-  }
-  
-  if (viewportTop + viewportHeight >= mainContent.scrollHeight) {
-    const lastHeading = headings[headings.length - 1]
-    if (lastHeading.element.id) {
-      selectedHeading.value = lastHeading.element.id
-      return
-    }
-  }
-  
-  let closestHeading = null
-  let minDistance = Infinity
-  
-  for (const heading of headings) {
-    const distance = Math.abs(heading.top - viewportCenter)
-    if (distance < minDistance) {
-      minDistance = distance
-      closestHeading = heading
-    }
-  }
-  
-  if (closestHeading && closestHeading.element.id) {
-    selectedHeading.value = closestHeading.element.id
-    
-    const item = findOutlineItem(closestHeading.element.id)
-    if (item) {
-      let parent = findParentOutlineItem(closestHeading.element.id)
-      while (parent) {
-        parent.isExpanded = true
-        parent = findParentOutlineItem(parent.id)
-      }
-    }
-  }
-}
-
 const loadFileList = async () => {
   try {
-    // 在开发环境中使用 API，在生产环境中使用静态文件
     const isDev = import.meta.env.DEV
     const url = isDev ? '/online-typora/api/docs/list' : '/online-typora/docs-list.json'
     
@@ -297,7 +147,6 @@ const loadFileList = async () => {
       throw new Error(`HTTP error! status: ${response.status}`)
     }
     const files = await response.json()
-    // 设置第一级默认展开
     files.forEach((file: FileNode) => {
       file.isExpanded = true
       if (file.children) {
@@ -317,34 +166,46 @@ const loadFileList = async () => {
   }
 }
 
-watch(() => props.outline, (newOutline) => {
-  if (newOutline.length > 0) {
-    newOutline.forEach(item => {
-      item.isExpanded = true
+watch(
+  [() => props.outline, () => activeTab.value],
+  ([newOutline, newTab], [oldOutline, oldTab]) => {
+    console.log('DG2: Combined watch triggered:', {
+      newOutlineLength: newOutline?.length || 0,
+      oldOutlineLength: oldOutline?.length || 0,
+      newTab,
+      oldTab
     })
-    setTimeout(initObserver, 0)
+
+    // 只在切换到大纲标签时重置状态
+    if (newTab === 'outline') {
+      console.log('DG2: Tab switched to outline, updating state')
+      nextTick(() => {
+        resetOutlineState()
+      })
+    } else if (newTab === 'files') {
+      // 切换到文件树时清空大纲
+      selectedHeading.value = ''
+    }
   }
-}, { immediate: true })
+)
 
 const checkScroll = () => {
-  console.log('LLog: checkScroll called')
   const mainContent = document.querySelector('.main-content')
-  if (!mainContent) {
-    console.log('LLog: checkScroll no mainContent')
-    return
-  }
+  if (!mainContent) return
+  
   const scrollTop = mainContent.scrollTop
-  console.log('LLog: checkScroll', 'selectedFile:', props.selectedFile, 'scrollTop:', scrollTop)
   showBackToTop.value = scrollTop < lastScrollTop && scrollTop > 100
   lastScrollTop = scrollTop
+  
   if (scrollTimeout) {
     clearTimeout(scrollTimeout)
   }
+  
   if (isRestoringScroll.value) {
-    // 本次是恢复滚动，不保存，并且重置标志
     isRestoringScroll.value = false
     return
   }
+  
   scrollTimeout = window.setTimeout(() => {
     if (props.selectedFile) {
       saveScrollPosition(props.selectedFile, scrollTop)
@@ -363,6 +224,7 @@ const scrollToTop = () => {
 }
 
 const handleTabChange = (tab: string) => {
+  console.log('DG2: Tab change requested:', tab)
   activeTab.value = tab
 }
 
@@ -374,13 +236,11 @@ function restoreScrollForSelectedFile() {
   if (props.selectedFile) {
     const mainContent = document.querySelector('.main-content')
     if (mainContent) {
-      // 等待内容完全加载后再恢复滚动位置
       const checkContentLoaded = () => {
         if (mainContent.scrollHeight > 0) {
           const storedPosition = getStoredScrollPosition(props.selectedFile)
           isRestoringScroll.value = true
           mainContent.scrollTop = storedPosition
-          console.log('LLog: restore scrollTop for', props.selectedFile, storedPosition)
         } else {
           setTimeout(checkContentLoaded, 50)
         }
@@ -390,22 +250,65 @@ function restoreScrollForSelectedFile() {
   }
 }
 
+// 修改重置状态的方法
+const resetOutlineState = () => {
+  if (isResetting) {
+    console.log('DG2: Reset already in progress, skipping')
+    return
+  }
+
+  console.log('DG2: Resetting outline state, current outline length:', props.outline?.length || 0)
+  if (props.outline?.length > 0 && activeTab.value === 'outline') {
+    try {
+      isResetting = true
+      console.log('DG2: Starting outline reset')
+      selectedHeading.value = ''
+      
+      // 递归设置展开状态
+      const setExpandState = (items: any[], level: number) => {
+        items.forEach((item, index) => {
+          // 三级以内的标题默认展开
+          item.isExpanded = level <= 3
+          
+          // 选中第一个标题
+          if (level === 1 && index === 0) {
+            selectedHeading.value = item.id
+            console.log('DG2: Selected first heading:', item.id)
+          }
+          
+          // 递归处理子项
+          if (item.children) {
+            setExpandState(item.children, level + 1)
+          }
+        })
+      }
+      
+      // 处理所有大纲项
+      setExpandState(props.outline, 1)
+      
+      console.log('DG2: Outline reset completed')
+    } finally {
+      isResetting = false
+    }
+  } else {
+    console.log('DG2: Skip outline reset - conditions not met:', {
+      outlineLength: props.outline?.length || 0,
+      activeTab: activeTab.value
+    })
+  }
+}
+
 defineExpose({ restoreScrollForSelectedFile })
 
 onMounted(() => {
-  console.log('LLog: Sidebar onMounted')
-  window.addEventListener('scroll', () => {
-    console.log('LLog: window scroll')
-  })
+  console.log('DG2: Component mounted, activeTab:', activeTab.value)
   loadFileList()
-  setTimeout(initObserver, 100)
-  // 添加滚动监听
+  if (activeTab.value === 'outline') {
+    resetOutlineState()
+  }
   const mainContent = document.querySelector('.main-content')
   if (mainContent) {
     mainContent.addEventListener('scroll', checkScroll)
-    console.log('LLog: mainContent scroll listener added')
-  } else {
-    console.log('LLog: mainContent not found in onMounted')
   }
 })
 
@@ -419,13 +322,8 @@ onUnmounted(() => {
   if (scrollTimeout) {
     clearTimeout(scrollTimeout)
   }
-  if (observer) {
-    observer.disconnect()
-    observer = null
-  }
   const mainContent = document.querySelector('.main-content')
   if (mainContent) {
-    mainContent.removeEventListener('scroll', handleScroll)
     mainContent.removeEventListener('scroll', checkScroll)
   }
 })
@@ -464,135 +362,6 @@ onUnmounted(() => {
   width: 100%;
 }
 
-.file-item,
-.outline-item {
-  padding: 5px 10px;
-  cursor: pointer;
-  border-radius: 0;
-  position: relative;
-  text-align: left;
-  transition: background-color 0.2s;
-  display: flex;
-  align-items: flex-start;
-  padding-right: 16px;
-  user-select: none;
-  margin-left: -2px;
-  margin-right: -2px;
-}
-
-.file-item:hover,
-.outline-item:hover {
-  background-color: rgba(24, 144, 255, 0.05);
-  border-left: 2px solid rgba(24, 144, 255, 0.3);
-}
-
-.file-item.is-selected,
-.outline-item.is-selected {
-  background-color: rgba(24, 144, 255, 0.1);
-  color: #1890ff;
-  border-left: 2px solid #1890ff;
-}
-
-.file-name,
-.outline-name {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  white-space: normal;
-  word-break: break-all;
-  line-height: 1.4;
-  position: relative;
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  transition: color 0.2s ease;
-}
-
-.file-item:hover .file-name,
-.file-item.is-selected .file-name,
-.outline-item:hover .outline-name,
-.outline-item.is-selected .outline-name {
-  color: #1890ff;
-}
-
-.file-name {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  white-space: normal;
-  word-break: break-all;
-  line-height: 1.4;
-  position: relative;
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  transition: color 0.2s ease;
-}
-
-.file-name:hover {
-  color: #1890ff;
-}
-
-/* 添加第一级文件加粗样式 */
-.file-tree > .file-item > .file-name {
-  font-weight: bold;
-}
-
-/* 修改滚动条样式 */
-.file-tree::-webkit-scrollbar {
-  width: 6px;
-  position: absolute;
-  right: 0;
-  background-color: transparent;
-}
-
-.file-tree::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.5);
-  border-radius: 0;
-}
-
-.file-tree::-webkit-scrollbar-track {
-  background-color: transparent;
-}
-
-/* 确保箭头位置固定 */
-.arrow-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  font-size: 12px;
-  color: #666;
-  cursor: pointer;
-  user-select: none;
-  flex-shrink: 0;
-  position: absolute;
-  right: -16px;
-  transition: transform 0.2s ease, opacity 0.2s ease;
-  z-index: 1;
-  opacity: 0.5;
-}
-
-.arrow-icon:hover {
-  opacity: 0.8;
-}
-
-.arrow-icon.expanded {
-  transform: rotate(90deg);
-  opacity: 0.8;
-}
-
-.children {
-  width: calc(100% - 12px);
-  margin-left: 12px;
-  padding-left: 8px;
-}
-
 .outline {
   flex: 1;
   overflow-y: auto;
@@ -600,100 +369,6 @@ onUnmounted(() => {
   padding: 10px 16px 10px 5px;
   position: relative;
   width: 100%;
-}
-
-.outline-item {
-  padding: 5px 0;
-  cursor: pointer;
-  position: relative;
-  text-align: left;
-  transition: background-color 0.2s;
-  display: flex;
-  align-items: center;
-  padding-left: 8px;
-}
-
-.outline-name {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  line-height: 22px;
-  position: relative;
-  padding: 0 24px 0 8px;
-}
-
-/* 层级连接线 */
-.outline .children {
-  position: relative;
-  margin-left: 8px;
-  padding-left: 4px;
-}
-
-.outline .children::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 1px;
-  height: 100%;
-  background-color: var(--border-color, #363636);
-  opacity: 0.4;
-}
-
-/* 展开/折叠箭头 */
-.outline .arrow-icon {
-  position: absolute;
-  right: 4px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 16px;
-  height: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0.7;
-  transition: transform 0.2s;
-  z-index: 1;
-}
-
-.outline .arrow-icon.expanded {
-  transform: translateY(-50%) rotate(90deg);
-}
-
-.outline .arrow-icon img {
-  width: 12px;
-  height: 12px;
-}
-
-/* 悬停和选中状态 */
-.outline-item:hover {
-  background-color: var(--hover-background, rgba(24, 144, 255, 0.05));
-}
-
-.outline-item.is-selected {
-  background-color: var(--selected-background, rgba(24, 144, 255, 0.1));
-}
-
-.outline-item.is-selected .outline-name {
-  color: var(--selected-color, #1890ff);
-}
-
-.outline-text {
-  flex: 1;
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-weight: normal;
-}
-
-/* 第一级标题加粗 */
-.outline > .outline-item > .outline-name > .outline-text {
-  font-weight: 500;
 }
 
 .empty-outline {
@@ -736,121 +411,23 @@ onUnmounted(() => {
   background-color: #f5f5f5;
 }
 
-.icon-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  width: 24px;
-}
-
-.left-section .icon-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-}
-
-.right-section .icon-wrapper {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.custom-tooltip {
-  position: fixed;
-  z-index: 9999;
-  background-color: #616161;
-  color: white;
-  padding: 5px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  pointer-events: none;
-  white-space: nowrap;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  transition: opacity 0.2s;
-}
-
-/* 添加resize-handle样式 */
-.resize-handle {
-  width: 4px;
-  cursor: col-resize;
+/* 修改滚动条样式 */
+.file-tree::-webkit-scrollbar,
+.outline::-webkit-scrollbar {
+  width: 6px;
+  position: absolute;
+  right: 0;
   background-color: transparent;
-  transition: background-color 0.2s;
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  position: relative;
-  z-index: 10;
 }
 
-.resize-handle:hover {
-  background-color: #1890ff;
-}
-
-/* 禁止所有可拖动元素的文字选中 */
-.file-name, .outline-name, .tab-text {
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-}
-
-/* 添加全局禁止选中样式 */
-:deep(*) {
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-}
-
-/* 允许输入框和文本区域选中 */
-:deep(input), :deep(textarea) {
-  user-select: text;
-  -webkit-user-select: text;
-  -moz-user-select: text;
-  -ms-user-select: text;
-}
-
-/* 确保内容区域也被禁止选中 */
-.content-container {
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-}
-
-/* 确保主内容区域也被禁止选中 */
-.main-content {
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-}
-
-/* 修改工具栏样式 */
-:deep(.toolbar-item) {
-  transition: background-color 0.2s;
-}
-
-:deep(.toolbar-item:hover) {
-  background-color: rgba(24, 144, 255, 0.05);
-  border-left: 2px solid rgba(24, 144, 255, 0.3);
+.file-tree::-webkit-scrollbar-thumb,
+.outline::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.5);
   border-radius: 0;
 }
 
-:deep(.toolbar-item.active) {
-  background-color: rgba(24, 144, 255, 0.1);
-  border-left: 2px solid #1890ff;
-  border-radius: 0;
-}
-
-:deep(.toolbar-item img) {
-  opacity: 1;
+.file-tree::-webkit-scrollbar-track,
+.outline::-webkit-scrollbar-track {
+  background-color: transparent;
 }
 </style> 
