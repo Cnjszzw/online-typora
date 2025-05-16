@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 console.log('LLog: App.vue setup loaded')
-import { ref, onMounted, watch, nextTick } from 'vue'
+import { ref, onMounted, watch, nextTick, onUnmounted } from 'vue'
 import Sidebar from './components/Sidebar.vue'
 import MarkdownIt from 'markdown-it'
 import hljs from 'highlight.js'
@@ -288,10 +288,15 @@ const markdownContent = ref('')
 const currentOutline = ref<{ id: string; text: string; level: number; children?: any[] }[]>([])
 const selectedHeading = ref('')
 const isUserClick = ref(false)
-const currentFileName = ref('') // 添加当前文件名状态
+const currentFileName = ref('')
 const openTabs = ref<{ name: string; path: string; content: string; outline?: { id: string; text: string; level: number; children?: any[] }[] }[]>([])
 const activeTab = ref('')
 const sidebarRef = ref()
+const showBackToTop = ref(false)
+const isRestoringScroll = ref(false)
+let lastScrollTop = 0
+let scrollTimeout: number | null = null
+let isResetting = false
 
 // 监听markdownContent变化，初始化mermaid图表和代码块功能
 watch(markdownContent, async () => {
@@ -736,23 +741,41 @@ const loadMarkdownContent = async (filePath: string) => {
     const outline: any[] = []
     const parentStack: any[] = []
     
+    // 找到最小的标题级别
+    let minLevel = 6
+    headings.forEach(heading => {
+      const level = parseInt(heading.tagName[1])
+      if (level < minLevel) {
+        minLevel = level
+      }
+    })
+    
+    // 处理标题，限制最多显示三级
     headings.forEach(heading => {
       const id = heading.id
       const text = heading.textContent || ''
-      const level = parseInt(heading.tagName[1])
+      const originalLevel = parseInt(heading.tagName[1])
       
-      console.log('DG2: 处理标题:', { id, text, level })
+      // 计算相对层级（从1开始）
+      const relativeLevel = originalLevel - minLevel + 1
+      
+      // 如果相对层级超过3，则跳过
+      if (relativeLevel > 3) {
+        return
+      }
+      
+      console.log('DG2: 处理标题:', { id, text, originalLevel, relativeLevel })
       
       const item = {
         id,
         text,
-        level,
+        level: relativeLevel,
         children: [],
         isExpanded: true
       }
       
       // 重置到正确的层级
-      while (parentStack.length > 0 && level <= parentStack[parentStack.length - 1].level) {
+      while (parentStack.length > 0 && relativeLevel <= parentStack[parentStack.length - 1].level) {
         parentStack.pop()
       }
       
@@ -764,7 +787,7 @@ const loadMarkdownContent = async (filePath: string) => {
         outline.push(item)
       }
       
-      if (level < 6) { // 只处理到 h5
+      if (relativeLevel < 3) { // 只有前两级可以作为父级
         parentStack.push(item)
       }
     })
@@ -799,6 +822,89 @@ const loadMarkdownContent = async (filePath: string) => {
     return '加载文件失败'
   }
 }
+
+// 添加滚动检查函数
+const checkScroll = () => {
+  const mainContent = document.querySelector('.main-content')
+  if (!mainContent) return
+  
+  const scrollTop = mainContent.scrollTop
+  showBackToTop.value = scrollTop < lastScrollTop && scrollTop > 100
+  lastScrollTop = scrollTop
+  
+  if (scrollTimeout) {
+    clearTimeout(scrollTimeout)
+  }
+  
+  if (isRestoringScroll.value) {
+    isRestoringScroll.value = false
+    return
+  }
+
+  // 如果是用户点击导致的滚动，不更新选中标题
+  if (isUserClick.value) {
+    return
+  }
+  
+  // 添加滚动时更新选中标题的逻辑
+  const headings = document.querySelectorAll('.markdown-heading')
+  let currentHeading: HTMLElement | null = null
+  let minDistance = Infinity
+  const viewportTop = mainContent.scrollTop
+  const viewportBottom = viewportTop + mainContent.clientHeight
+  const scrollOffset = 20 // 减小偏移量，使选中更精确
+
+  // 遍历所有标题，找到当前视口中最接近顶部的标题
+  headings.forEach(heading => {
+    if (!(heading instanceof HTMLElement)) return
+    
+    const rect = heading.getBoundingClientRect()
+    const headingTop = rect.top + mainContent.scrollTop
+    const distance = Math.abs(headingTop - (viewportTop + scrollOffset))
+    
+    // 如果标题在视口内或接近视口顶部，且距离更近，则更新当前标题
+    if (headingTop <= viewportBottom && distance < minDistance) {
+      minDistance = distance
+      currentHeading = heading
+    }
+  })
+
+  // 更新选中的标题
+  if (currentHeading && currentHeading.id) {
+    selectedHeading.value = currentHeading.id
+  }
+  
+  scrollTimeout = window.setTimeout(() => {
+    if (activeTab.value) {
+      const storedPositions = localStorage.getItem('documentScrollPositions')
+      let positions: Record<string, number> = {}
+      if (storedPositions) {
+        positions = JSON.parse(storedPositions)
+      }
+      positions[activeTab.value] = scrollTop
+      localStorage.setItem('documentScrollPositions', JSON.stringify(positions))
+    }
+  }, 500)
+}
+
+// 在组件挂载时添加滚动监听
+onMounted(() => {
+  const mainContent = document.querySelector('.main-content')
+  if (mainContent) {
+    mainContent.addEventListener('scroll', checkScroll)
+  }
+})
+
+// 在组件卸载时移除滚动监听
+onUnmounted(() => {
+  const mainContent = document.querySelector('.main-content')
+  if (mainContent) {
+    mainContent.removeEventListener('scroll', checkScroll)
+  }
+  if (scrollTimeout) {
+    clearTimeout(scrollTimeout)
+  }
+})
 </script>
 
 <template>

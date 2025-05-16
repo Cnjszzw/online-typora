@@ -76,65 +76,26 @@ const toggleOutlineItem = (item: OutlineItem) => {
   transition: background-color 0.2s;
   display: flex;
   align-items: center;
-  padding-left: 8px;
-  user-select: none;
-  margin-left: -2px;
-  margin-right: -2px;
-}
-
-.outline-item:hover {
-  background-color: rgba(24, 144, 255, 0.05);
-}
-
-.outline-item.is-selected {
-  background-color: rgba(24, 144, 255, 0.1);
-  color: #1890ff;
+  padding-left: 12px;
 }
 
 .outline-name {
   display: flex;
   align-items: center;
   width: 100%;
-  min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   line-height: 22px;
   position: relative;
   padding: 0 8px;
-  transition: color 0.2s ease;
+  min-width: 0;
 }
 
-.outline-item:hover .outline-name,
-.outline-item.is-selected .outline-name {
-  color: #1890ff;
-}
-
-.arrow-icon {
-  position: relative;
-  width: 16px;
-  height: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0.7;
-  transition: transform 0.2s;
-  margin-right: 4px;
-  flex-shrink: 0;
-}
-
-.arrow-icon.expanded {
-  transform: rotate(90deg);
-}
-
-.arrow-icon img {
-  width: 12px;
-  height: 12px;
-}
-
+/* 层级连接线 */
 .children {
   position: relative;
-  margin-left: 8px;
+  margin-left: 12px;
   padding-left: 4px;
 }
 
@@ -149,6 +110,47 @@ const toggleOutlineItem = (item: OutlineItem) => {
   opacity: 0.4;
 }
 
+/* 展开/折叠箭头 */
+.arrow-icon {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  left: 0;
+  opacity: 0.7;
+  transition: transform 0.2s;
+  z-index: 1;
+}
+
+.arrow-icon.expanded {
+  transform: rotate(90deg);
+}
+
+.arrow-icon img {
+  width: 12px;
+  height: 12px;
+}
+
+/* 悬停和选中状态 */
+.outline-item:hover {
+  background-color: var(--hover-background, rgba(24, 144, 255, 0.05));
+}
+
+.outline-item.is-selected {
+  background-color: var(--selected-background, rgba(24, 144, 255, 0.1));
+}
+
+.outline-item.is-selected .outline-name {
+  color: var(--selected-color, #1890ff);
+}
+
+/* 顶层样式 */
+.outline-tree > .outline-item > .outline-name > .outline-text {
+  font-weight: 500;
+}
+
 .outline-text {
   flex: 1;
   min-width: 0;
@@ -156,10 +158,5 @@ const toggleOutlineItem = (item: OutlineItem) => {
   overflow: hidden;
   text-overflow: ellipsis;
   font-weight: normal;
-}
-
-/* 第一级标题加粗 */
-.outline-tree > .outline-item > .outline-name > .outline-text {
-  font-weight: 500;
 }
 </style> 
