@@ -23,42 +23,40 @@
           <template v-if="outline.length > 0">
             <template v-for="item in outline" :key="item.id">
               <div class="outline-item" :class="{ 'is-selected': selectedHeading === item.id }">
+                <span v-if="item.children && item.children.length > 0" 
+                      class="arrow-icon" 
+                      :class="{ expanded: item.isExpanded }" 
+                      @click.stop="toggleOutlineItem(item)">
+                  <img src="/arrow-next-small-svgrepo-com.svg" alt="arrow" />
+                </span>
                 <div class="outline-name" @click="handleHeadingClick(item.id)">
                   <span class="outline-text">{{ item.text }}</span>
-                  <span class="arrow-icon" :class="{ expanded: item.isExpanded }" @click.stop="toggleOutlineItem(item)">
-                    <template v-if="item.children && item.children.length > 0">
-                      <img src="/arrow-next-small-svgrepo-com.svg" alt="arrow" style="width: 12px; height: 12px;" />
-                    </template>
-                  </span>
                 </div>
               </div>
-              <template v-if="item.children && item.isExpanded">
-                <div class="children">
-                  <template v-for="child in item.children" :key="child.id">
-                    <div class="outline-item" :class="{ 'is-selected': selectedHeading === child.id }">
-                      <div class="outline-name" @click="handleHeadingClick(child.id)">
-                        <span class="outline-text">{{ child.text }}</span>
-                        <span class="arrow-icon" :class="{ expanded: child.isExpanded }" @click.stop="toggleOutlineItem(child)">
-                          <template v-if="child.children && child.children.length > 0">
-                            <img src="/arrow-next-small-svgrepo-com.svg" alt="arrow" style="width: 12px; height: 12px;" />
-                          </template>
-                        </span>
-                      </div>
+              <div v-if="item.children && item.isExpanded" class="children">
+                <template v-for="child in item.children" :key="child.id">
+                  <div class="outline-item" :class="{ 'is-selected': selectedHeading === child.id }">
+                    <span v-if="child.children && child.children.length > 0" 
+                          class="arrow-icon" 
+                          :class="{ expanded: child.isExpanded }" 
+                          @click.stop="toggleOutlineItem(child)">
+                      <img src="/arrow-next-small-svgrepo-com.svg" alt="arrow" />
+                    </span>
+                    <div class="outline-name" @click="handleHeadingClick(child.id)">
+                      <span class="outline-text">{{ child.text }}</span>
                     </div>
-                    <template v-if="child.children && child.isExpanded">
-                      <div class="children">
-                        <template v-for="grandChild in child.children" :key="grandChild.id">
-                          <div class="outline-item" :class="{ 'is-selected': selectedHeading === grandChild.id }">
-                            <div class="outline-name" @click="handleHeadingClick(grandChild.id)">
-                              <span class="outline-text">{{ grandChild.text }}</span>
-                            </div>
-                          </div>
-                        </template>
+                  </div>
+                  <div v-if="child.children && child.isExpanded" class="children">
+                    <template v-for="grandChild in child.children" :key="grandChild.id">
+                      <div class="outline-item" :class="{ 'is-selected': selectedHeading === grandChild.id }">
+                        <div class="outline-name" @click="handleHeadingClick(grandChild.id)">
+                          <span class="outline-text">{{ grandChild.text }}</span>
+                        </div>
                       </div>
                     </template>
-                  </template>
-                </div>
-              </template>
+                  </div>
+                </template>
+              </div>
             </template>
           </template>
           <div v-else class="empty-outline">
@@ -597,108 +595,105 @@ onUnmounted(() => {
 
 .outline {
   flex: 1;
-  overflow-y: scroll;
+  overflow-y: auto;
   overflow-x: hidden;
   padding: 10px 16px 10px 5px;
   position: relative;
   width: 100%;
 }
 
-/* 修改大纲滚动条样式 */
-.outline::-webkit-scrollbar {
-  width: 6px;
-  position: absolute;
-  right: 0;
-  background-color: transparent;
-}
-
-.outline::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.5);
-  border-radius: 0;
-}
-
-.outline::-webkit-scrollbar-track {
-  background-color: transparent;
-}
-
-/* 确保大纲箭头位置固定 */
-.outline .arrow-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  font-size: 12px;
-  color: #666;
-  cursor: pointer;
-  user-select: none;
-  flex-shrink: 0;
-  position: absolute;
-  right: -16px;
-  transition: transform 0.2s ease;
-  z-index: 1;
-}
-
 .outline-item {
-  padding: 5px 10px;
+  padding: 5px 0;
   cursor: pointer;
-  border-radius: 4px;
+  position: relative;
   text-align: left;
   transition: background-color 0.2s;
   display: flex;
-  align-items: flex-start;
-  padding-right: 16px;
-}
-
-.outline-item:hover {
-  background-color: rgba(24, 144, 255, 0.05);
-  border-left: 2px solid rgba(24, 144, 255, 0.3);
-  border-radius: 0;
-}
-
-.outline-item.is-selected {
-  background-color: rgba(24, 144, 255, 0.1);
-  color: #1890ff;
-  border-left: 2px solid #1890ff;
-  border-radius: 0;
+  align-items: center;
+  padding-left: 8px;
 }
 
 .outline-name {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   width: 100%;
-  padding-left: 5px;
-  cursor: pointer;
-  min-height: 24px;
-  white-space: normal;
-  word-break: break-all;
-  line-height: 1.4;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 22px;
   position: relative;
+  padding: 0 24px 0 8px;
 }
 
-/* 添加大纲第一级加粗样式 */
-.outline > .outline-item > .outline-name > .outline-text {
-  font-weight: bold;
+/* 层级连接线 */
+.outline .children {
+  position: relative;
+  margin-left: 8px;
+  padding-left: 4px;
+}
+
+.outline .children::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 100%;
+  background-color: var(--border-color, #363636);
+  opacity: 0.4;
+}
+
+/* 展开/折叠箭头 */
+.outline .arrow-icon {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+  transition: transform 0.2s;
+  z-index: 1;
+}
+
+.outline .arrow-icon.expanded {
+  transform: translateY(-50%) rotate(90deg);
+}
+
+.outline .arrow-icon img {
+  width: 12px;
+  height: 12px;
+}
+
+/* 悬停和选中状态 */
+.outline-item:hover {
+  background-color: var(--hover-background, rgba(24, 144, 255, 0.05));
+}
+
+.outline-item.is-selected {
+  background-color: var(--selected-background, rgba(24, 144, 255, 0.1));
+}
+
+.outline-item.is-selected .outline-name {
+  color: var(--selected-color, #1890ff);
 }
 
 .outline-text {
   flex: 1;
-  white-space: normal;
-  word-break: break-all;
-  margin-right: 8px;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: normal;
+}
+
+/* 第一级标题加粗 */
+.outline > .outline-item > .outline-name > .outline-text {
   font-weight: 500;
-  transition: color 0.2s ease;
-}
-
-.outline-text:hover {
-  color: #1890ff;
-}
-
-.outline .children {
-  width: calc(100% - 12px);
-  margin-left: 12px;
-  padding-left: 8px;
 }
 
 .empty-outline {
