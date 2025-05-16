@@ -9,32 +9,24 @@
         <Search v-if="activeTab === 'search'" @exit-search="handleExitSearch" :sidebar-width="props.sidebarWidth" />
         
         <div v-else-if="activeTab === 'files'" class="file-tree">
-          <keep-alive>
-            <div>
-              <FileTreeItem
-                v-for="file in fileTree"
-                :key="file.path"
-                :file="file"
-                :selected-file="selectedFile"
-                :is-top-level="true"
-                @file-select="handleFileSelect"
-              />
-            </div>
-          </keep-alive>
+          <FileTreeItem
+            v-for="file in fileTree"
+            :key="file.path"
+            :file="file"
+            :selected-file="selectedFile"
+            :is-top-level="true"
+            @file-select="handleFileSelect"
+          />
         </div>
         
         <div v-else class="outline">
           <template v-if="outline.length > 0">
-            <keep-alive>
-              <component
-                :is="OutlineTreeItem"
-                :key="selectedFile"
-                :outline="outline"
-                :selected-heading="selectedHeading"
-                @heading-click="handleHeadingClick"
-                @toggle-item="toggleOutlineItem"
-              />
-            </keep-alive>
+            <OutlineTreeItem
+              :outline="outline"
+              :selected-heading="selectedHeading"
+              @heading-click="handleHeadingClick"
+              @toggle-item="toggleOutlineItem"
+            />
           </template>
           <div v-else class="empty-outline">
             当前文件没有大纲
@@ -91,23 +83,45 @@ const activeTab = ref('files')
 const fileTree = ref<FileNode[]>([])
 const selectedHeading = ref<string>('')
 const showBackToTop = ref(false)
+const isRestoringScroll = ref(false)
+let lastScrollTop = 0
+let scrollTimeout: number | null = null
 let isResetting = false
 
+// 获取存储的文档位置
+const getStoredScrollPosition = (filePath: string): number => {
+  const storedPositions = localStorage.getItem('documentScrollPositions')
+  if (storedPositions) {
+    const positions = JSON.parse(storedPositions)
+    return positions[filePath] || 0
+  }
+  return 0
+}
+
+// 保存文档位置
+const saveScrollPosition = (filePath: string, position: number) => {
+  const storedPositions = localStorage.getItem('documentScrollPositions')
+  let positions: Record<string, number> = {}
+  if (storedPositions) {
+    positions = JSON.parse(storedPositions)
+  }
+  positions[filePath] = position
+  localStorage.setItem('documentScrollPositions', JSON.stringify(positions))
+}
+
 const handleFileSelect = (path: string) => {
-  console.log('CP003 File select:', {
-    path,
-    activeTab: activeTab.value,
-    timestamp: new Date().toISOString()
-  })
+  if (props.selectedFile) {
+    const mainContent = document.querySelector('.main-content')
+    if (mainContent) {
+      saveScrollPosition(props.selectedFile, mainContent.scrollTop)
+      mainContent.scrollTop = 0
+    }
+  }
   emit('file-select', path)
 }
 
 const handleHeadingClick = (id: string) => {
-  console.log('CP003 Heading click:', {
-    id,
-    activeTab: activeTab.value,
-    timestamp: new Date().toISOString()
-  })
+  console.log('DG2: Heading clicked:', id)
   selectedHeading.value = id
   emit('scroll-to-heading', id)
 }
@@ -152,6 +166,53 @@ const loadFileList = async () => {
   }
 }
 
+watch(
+  [() => props.outline, () => activeTab.value],
+  ([newOutline, newTab], [oldOutline, oldTab]) => {
+    console.log('DG2: Combined watch triggered:', {
+      newOutlineLength: newOutline?.length || 0,
+      oldOutlineLength: oldOutline?.length || 0,
+      newTab,
+      oldTab
+    })
+
+    // 只在切换到大纲标签时重置状态
+    if (newTab === 'outline') {
+      console.log('DG2: Tab switched to outline, updating state')
+      nextTick(() => {
+        resetOutlineState()
+      })
+    } else if (newTab === 'files') {
+      // 切换到文件树时清空大纲
+      selectedHeading.value = ''
+    }
+  }
+)
+
+const checkScroll = () => {
+  const mainContent = document.querySelector('.main-content')
+  if (!mainContent) return
+  
+  const scrollTop = mainContent.scrollTop
+  showBackToTop.value = scrollTop < lastScrollTop && scrollTop > 100
+  lastScrollTop = scrollTop
+  
+  if (scrollTimeout) {
+    clearTimeout(scrollTimeout)
+  }
+  
+  if (isRestoringScroll.value) {
+    isRestoringScroll.value = false
+    return
+  }
+  
+  scrollTimeout = window.setTimeout(() => {
+    if (props.selectedFile) {
+      saveScrollPosition(props.selectedFile, scrollTop)
+    }
+  }, 500)
+}
+
 const scrollToTop = () => {
   const mainContent = document.querySelector('.main-content')
   if (mainContent) {
@@ -163,16 +224,30 @@ const scrollToTop = () => {
 }
 
 const handleTabChange = (tab: string) => {
-  console.log('CP003 Tab change:', {
-    from: activeTab.value,
-    to: tab,
-    timestamp: new Date().toISOString()
-  })
+  console.log('DG2: Tab change requested:', tab)
   activeTab.value = tab
 }
 
 const handleExitSearch = () => {
   activeTab.value = 'files'
+}
+
+function restoreScrollForSelectedFile() {
+  if (props.selectedFile) {
+    const mainContent = document.querySelector('.main-content')
+    if (mainContent) {
+      const checkContentLoaded = () => {
+        if (mainContent.scrollHeight > 0) {
+          const storedPosition = getStoredScrollPosition(props.selectedFile)
+          isRestoringScroll.value = true
+          mainContent.scrollTop = storedPosition
+        } else {
+          setTimeout(checkContentLoaded, 50)
+        }
+      }
+      checkContentLoaded()
+    }
+  }
 }
 
 // 修改重置状态的方法
@@ -230,22 +305,36 @@ const updateSelectedHeading = (id: string) => {
 }
 
 defineExpose({ 
+  restoreScrollForSelectedFile,
   updateSelectedHeading
 })
 
 onMounted(() => {
-  console.log('CP003 Sidebar mounted:', {
-    activeTab: activeTab.value,
-    timestamp: new Date().toISOString()
-  })
+  console.log('DG2: Component mounted, activeTab:', activeTab.value)
   loadFileList()
+  if (activeTab.value === 'outline') {
+    resetOutlineState()
+  }
+  const mainContent = document.querySelector('.main-content')
+  if (mainContent) {
+    mainContent.addEventListener('scroll', checkScroll)
+  }
 })
 
 onUnmounted(() => {
-  console.log('CP003 Sidebar unmounted:', {
-    activeTab: activeTab.value,
-    timestamp: new Date().toISOString()
-  })
+  if (props.selectedFile) {
+    const mainContent = document.querySelector('.main-content')
+    if (mainContent) {
+      saveScrollPosition(props.selectedFile, mainContent.scrollTop)
+    }
+  }
+  if (scrollTimeout) {
+    clearTimeout(scrollTimeout)
+  }
+  const mainContent = document.querySelector('.main-content')
+  if (mainContent) {
+    mainContent.removeEventListener('scroll', checkScroll)
+  }
 })
 </script>
 

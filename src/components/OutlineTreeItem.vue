@@ -1,5 +1,5 @@
 <template>
-  <div class="outline-tree" ref="outlineRef">
+  <div class="outline-tree">
     <template v-for="item in outline" :key="item.id">
       <div 
         class="outline-item" 
@@ -24,61 +24,18 @@
         v-if="item.children && item.isExpanded" 
         class="children"
       >
-        <div class="outline-tree">
-          <template v-for="child in item.children" :key="child.id">
-            <div 
-              class="outline-item" 
-              :class="{ 'is-selected': selectedHeading === child.id }"
-            >
-              <span 
-                v-if="child.children && child.children.length > 0" 
-                class="arrow-icon" 
-                :class="{ expanded: child.isExpanded }" 
-                @click.stop="toggleOutlineItem(child)"
-              >
-                <img src="/arrow-next-small-svgrepo-com.svg" alt="arrow" />
-              </span>
-              <div 
-                class="outline-name" 
-                @click="handleHeadingClick(child.id)"
-              >
-                <span class="outline-text">{{ child.text }}</span>
-              </div>
-            </div>
-            <div 
-              v-if="child.children && child.isExpanded" 
-              class="children"
-            >
-              <div class="outline-tree">
-                <template v-for="grandChild in child.children" :key="grandChild.id">
-                  <div 
-                    class="outline-item" 
-                    :class="{ 'is-selected': selectedHeading === grandChild.id }"
-                  >
-                    <div 
-                      class="outline-name" 
-                      @click="handleHeadingClick(grandChild.id)"
-                    >
-                      <span class="outline-text">{{ grandChild.text }}</span>
-                    </div>
-                  </div>
-                </template>
-              </div>
-            </div>
-          </template>
-        </div>
+        <OutlineTreeItem
+          :outline="item.children"
+          :selected-heading="selectedHeading"
+          @heading-click="handleHeadingClick"
+          @toggle-item="toggleOutlineItem"
+        />
       </div>
     </template>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { onMounted, onUnmounted, defineOptions, ref, watch, nextTick } from 'vue'
-
-defineOptions({
-  name: 'OutlineTreeItem'
-})
-
 interface OutlineItem {
   id: string
   text: string
@@ -97,70 +54,18 @@ const emit = defineEmits<{
   (e: 'toggle-item', item: OutlineItem): void
 }>()
 
-const scrollPosition = ref(0)
-const outlineRef = ref<HTMLElement | null>(null)
-
 const handleHeadingClick = (id: string) => {
-  console.log('CP003 OutlineTreeItem heading click:', {
-    id,
-    selectedHeading: props.selectedHeading,
-    timestamp: new Date().toISOString()
-  })
   emit('heading-click', id)
 }
 
 const toggleOutlineItem = (item: OutlineItem) => {
-  console.log('CP003 OutlineTreeItem toggle:', {
-    id: item.id,
-    text: item.text,
-    wasExpanded: item.isExpanded,
-    timestamp: new Date().toISOString()
-  })
   emit('toggle-item', item)
 }
-
-const handleScroll = () => {
-  const outlineElement = outlineRef.value?.closest('.outline')
-  if (outlineElement) {
-    scrollPosition.value = outlineElement.scrollTop
-  }
-}
-
-watch(() => props.outline, () => {
-  // 当大纲内容变化时，恢复滚动位置
-  nextTick(() => {
-    const outlineElement = outlineRef.value?.closest('.outline')
-    if (outlineElement) {
-      outlineElement.scrollTop = scrollPosition.value
-    }
-  })
-}, { deep: true })
-
-onMounted(() => {
-  console.log('CP003 OutlineTreeItem mounted:', {
-    outlineLength: props.outline.length,
-    selectedHeading: props.selectedHeading,
-    timestamp: new Date().toISOString()
-  })
-  
-  const outlineElement = outlineRef.value?.closest('.outline')
-  if (outlineElement) {
-    outlineElement.addEventListener('scroll', handleScroll)
-  }
-})
-
-onUnmounted(() => {
-  const outlineElement = outlineRef.value?.closest('.outline')
-  if (outlineElement) {
-    outlineElement.removeEventListener('scroll', handleScroll)
-  }
-})
 </script>
 
 <style scoped>
 .outline-tree {
   width: 100%;
-  position: relative;
 }
 
 .outline-item {
@@ -172,23 +77,6 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   padding-left: 12px;
-}
-
-/* 修改滚动条样式 */
-.outline-tree::-webkit-scrollbar {
-  width: 6px;
-  position: absolute;
-  right: 0;
-  background-color: transparent;
-}
-
-.outline-tree::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.5);
-  border-radius: 0;
-}
-
-.outline-tree::-webkit-scrollbar-track {
-  background-color: transparent;
 }
 
 .outline-name {
